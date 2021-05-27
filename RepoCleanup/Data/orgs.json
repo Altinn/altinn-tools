@@ -1,0 +1,142 @@
+[
+    {
+        "username": "dpa",
+        "full_name": "Datatilsynet",
+        "website": "https://www.datatilsynet.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "dsb",
+        "full_name": "Direktoratet for samfunnssikkerhet og beredskap",
+        "website": "https://www.dsb.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "fk",
+        "full_name": "Fellesordningen for avtalefestet pensjon",
+        "website": "https://www.afp.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "krt",
+        "full_name": "Finanstilsynet",
+        "website": "https://www.finanstilsynet.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "kyv",
+        "full_name": "Kystverket",
+        "website": "https://www.kystverket.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "lt",
+        "full_name": "Luftfartstilsynet",
+        "website": "https://luftfartstilsynet.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "lts",
+        "full_name": "Lotteri- og stiftelsestilsynet",
+        "website": "https://lottstift.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "mat",
+        "full_name": "Mattilsynet",
+        "website": "https://mattilsynet.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "npe",
+        "full_name": "Norsk pasientskadeerstatning",
+        "website": "https://www.npe.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "ok",
+        "full_name": "Oslo kommune",
+        "website": "https://www.oslo.kommune.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "oko",
+        "full_name": "Økokrim",
+        "website": "https://www.okokrim.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "pat",
+        "full_name": "Patenstyret",
+        "website": "https://www.patentstyret.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "pod",
+        "full_name": "Politiet",
+        "website": "https://www.politiet.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "sfd",
+        "full_name": "Sjøfartsdirektoratet",
+        "website": "https://www.sdir.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "sht",
+        "full_name": "Statens havarikommisjon",
+        "website": "https://havarikommisjonen.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "slf",
+        "full_name": "Landbruksdirektoratet",
+        "website": "https://www.landbruksdirektoratet.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "slv",
+        "full_name": "Statens legemiddelverk",
+        "website": "https://legemiddelverket.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "spk",
+        "full_name": "Statens pensjonskasse",
+        "website": "https://www.spk.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "tad",
+        "full_name": "Tolldirektoratet",
+        "website": "https://www.toll.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    },
+    {
+        "username": "tra",
+        "full_name": "Tilsynsrådet for advokatvirksomhet",
+        "website": "https://tilsynet.no/",
+        "visibility": "public",
+        "repo_admin_change_team_access": false
+    }
+]

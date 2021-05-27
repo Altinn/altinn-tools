@@ -27,7 +27,8 @@ namespace RepoCleanup
             Console.WriteLine("1) Remove codelists repositories");
             Console.WriteLine("2) Create team for organisation(s)");
             Console.WriteLine("3) Create org with all teams");
-            Console.WriteLine("4) Exit");
+            Console.WriteLine("4) Import organizations from json file");
+            Console.WriteLine("9) Exit");
             Console.Write("\r\nSelect an option: ");
 
             switch (Console.ReadLine())
@@ -42,6 +43,9 @@ namespace RepoCleanup
                     await CreateOrgWithTeams.Run();
                     return;
                 case "4":
+                    await CreateOrgWithTeams.ImportFromFile();
+                    return;
+                case "9":
                 default:
                     return;
             }

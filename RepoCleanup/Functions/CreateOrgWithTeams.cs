@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -15,78 +13,84 @@ namespace RepoCleanup.Functions
     {
         public static async Task Run()
         {
-            StringBuilder logBuilder = new StringBuilder();
-            string logName = @$"CreateOrgWithTeams-Log.txt";
-            bool createdOrg = false;
-
-            Console.Clear();
-            Console.WriteLine("\r\n----------------------------------------------------------------");
-            Console.WriteLine("------------ Create new organisation with teams ----------------");
-            Console.WriteLine("----------------------------------------------------------------");
+            WriteHeader();
 
             Organisation org = CollectOrgInfo();
 
-            Console.WriteLine("Creating org. Please wait.");
-            GiteaResponse response = await GiteaService.CreateOrg(org);
+            await CreateOrgAndTeams(org);
+        }        
 
-            if (response.Success)
-            {
-                logBuilder.AppendLine($"{DateTime.Now} - Information - Org {org.Username} was successfully added to Gitea.");
-                createdOrg = true;
-            }
-            else
-            {
-                logBuilder.AppendLine($"{DateTime.Now} - Error - Org {org.Username} was not added to Gitea.");
-                logBuilder.AppendLine($"{DateTime.Now} - Error -  {response.StatusCode}:{JsonSerializer.Serialize(response.ResponseMessage, Globals.SerializerOptions)}.");
-            }
+        public async static Task ImportFromFile()
+        {
+            WriteHeader();
 
-            using (StreamWriter file = new StreamWriter(logName, true))
+            var defaultPathToOrgsJsonFile = @"data/orgs.json";
+            var (pathToOrgsJsonFile, fileExits) = CollectPathToOrgsFile(defaultPathToOrgsJsonFile);
+
+            if (!fileExits)
             {
-                file.WriteLine(logBuilder.ToString());
+                return;
             }
 
-            logBuilder.Clear();
+            List<Organisation> organisations = ParseOrganisationsFromFile(pathToOrgsJsonFile);
 
-            if (createdOrg)
+            await CreateAllOrgsAndTeams(organisations);
+        }
+
+        private static void WriteHeader()
+        {
+            Console.Clear();
+            Console.WriteLine("\r\n----------------------------------------------------------------");
+            Console.WriteLine("------------ Create new organisation(s) with teams ----------------");
+            Console.WriteLine("----------------------------------------------------------------");
+        }
+
+        private static Tuple<string, bool> CollectPathToOrgsFile(string defaultPathToOrgsJsonFile)
+        {
+            Console.Write("Path to JSON file with array of organisations. Leave empty to use default data\\orgs.json: ");
+            var pathToOrgsJsonFile = Console.ReadLine();
+            pathToOrgsJsonFile = string.IsNullOrEmpty(pathToOrgsJsonFile) ? defaultPathToOrgsJsonFile : pathToOrgsJsonFile;
+
+            if (!System.IO.File.Exists(pathToOrgsJsonFile))
             {
-                Console.WriteLine($"Org {org.Username} successfully created.");
+                Console.WriteLine("Can't find the specified file!");
+                return new Tuple<string, bool>("", false);
             }
-            else
+
+            return new Tuple<string, bool>(pathToOrgsJsonFile, true);
+        }
+
+        private static List<Organisation> ParseOrganisationsFromFile(string pathToOrgsJsonFile)
+        {
+            string json = System.IO.File.ReadAllText(pathToOrgsJsonFile);
+            var organisations = JsonSerializer.Deserialize<List<Organisation>>(json);
+
+            return organisations;
+        }
+
+        private static async Task CreateAllOrgsAndTeams(List<Organisation> organisations)
+        {
+            Console.WriteLine($"Found {organisations.Count} organisations in file.");
+            Console.Write($"Attempting to create all, ok? (y/n) ");
+            var confirm = Console.ReadLine().ToLower();
+
+            if (confirm == "n")
             {
-                Console.WriteLine($"Create org for {org.Username} failed. See log {logName}.");
+                Console.WriteLine("Aborting, 0 organisations created.");
+                return;
             }
 
-            bool createdTeams = true;
-            List<CreateTeamOption> teams = new List<CreateTeamOption>();
-            teams.Add(TeamOption.GetCreateTeamOption("Deploy-Production", "Members can deploy to production", false, Permission.read));
-            teams.Add(TeamOption.GetCreateTeamOption("Deploy-TT02", "Members can deploy to TT02", false, Permission.read));
-            teams.Add(TeamOption.GetCreateTeamOption("Devs", "All application developers", true, Permission.write));
-
-            Console.WriteLine("Creating teams for org. Please wait.");
-            foreach (CreateTeamOption team in teams)
+            int orgsCreated = 0;
+            foreach (var org in organisations)
             {
-                response = await GiteaService.CreateTeam(org.Username, team);
-
-                if (response.Success)
+                var created = await CreateOrgAndTeams(org);
+                if (created)
                 {
-                    logBuilder.AppendLine($"{DateTime.Now} - Information - Team {team.Name} was successfully added to org: {org.Username}.");
-                }
-                else
-                {
-                    createdTeams = false;
-                    logBuilder.AppendLine($"{DateTime.Now} - Error - Team {team.Name} was not added to org {org.Username}.");
-                    logBuilder.AppendLine($"{DateTime.Now} - Error -  {response.StatusCode}:{JsonSerializer.Serialize(response.ResponseMessage, Globals.SerializerOptions)}.");
+                    orgsCreated++;
                 }
             }
 
-            if (createdTeams)
-            {
-                Console.WriteLine($"All teams for {org.Username} successfully created.");
-            }
-            else
-            {
-                Console.WriteLine($"Create teams for {org.Username} failed. See log {logName}.");
-            }
+            Console.WriteLine($"Created {orgsCreated} organisations out of {organisations.Count} specified.");
         }
 
         private static Organisation CollectOrgInfo()
@@ -133,6 +137,8 @@ namespace RepoCleanup.Functions
                 }
             }
 
+            Console.WriteLine();
+
             Organisation org = new Organisation();
             org.Username = username;
             org.Fullname = fullname;
@@ -140,6 +146,71 @@ namespace RepoCleanup.Functions
             org.Visibility = "public";
             org.RepoAdminChangeTeamAccess = false;
             return org;
+        }
+
+        private static async Task<bool> CreateOrgAndTeams(Organisation org)
+        {
+            bool createdOrg = false;
+            Console.WriteLine($"Creating org {org.Fullname} ({org.Username}). Please wait.");
+            GiteaResponse response = await GiteaService.CreateOrg(org);
+
+            if (response.Success)
+            {
+                Console.WriteLine($"{DateTime.Now} - Information - Org {org.Username} was successfully added to Gitea.");
+                createdOrg = true;
+            }
+            else
+            {
+                Console.WriteLine($"{DateTime.Now} - Error - Org {org.Username} was not added to Gitea.");
+                Console.WriteLine($"{DateTime.Now} - Error -  {response.StatusCode}:{JsonSerializer.Serialize(response.ResponseMessage, Globals.SerializerOptions)}.");
+            }
+
+            if (createdOrg)
+            {
+                Console.WriteLine($"Org {org.Fullname} ({org.Username}) successfully created.");
+                await CreateTeams(org);
+            }
+            else
+            {
+                Console.WriteLine($"Create org for {org.Fullname} ({org.Username}) failed. See details above.");
+            }
+
+            return createdOrg;
+        }
+
+        private static async Task CreateTeams(Organisation org)
+        {
+            bool createdTeams = true;
+            List<CreateTeamOption> teams = new List<CreateTeamOption>();
+            teams.Add(TeamOption.GetCreateTeamOption("Deploy-Production", "Members can deploy to production", false, Permission.read));
+            teams.Add(TeamOption.GetCreateTeamOption("Deploy-TT02", "Members can deploy to TT02", false, Permission.read));
+            teams.Add(TeamOption.GetCreateTeamOption("Devs", "All application developers", true, Permission.write));
+
+            Console.WriteLine("Creating teams for org. Please wait.");
+            foreach (CreateTeamOption team in teams)
+            {
+                GiteaResponse response = await GiteaService.CreateTeam(org.Username, team);
+
+                if (response.Success)
+                {
+                    Console.WriteLine($"{DateTime.Now} - Information - Team {team.Name} was successfully added to org: {org.Username}.");
+                }
+                else
+                {
+                    createdTeams = false;
+                    Console.WriteLine($"{DateTime.Now} - Error - Team {team.Name} was not added to org {org.Username}.");
+                    Console.WriteLine($"{DateTime.Now} - Error -  {response.StatusCode}:{JsonSerializer.Serialize(response.ResponseMessage, Globals.SerializerOptions)}.");
+                }
+            }
+
+            if (createdTeams)
+            {
+                Console.WriteLine($"All teams for {org.Username} successfully created.");
+            }
+            else
+            {
+                Console.WriteLine($"Create teams for {org.Username} failed.");
+            }
         }
     }
 }
