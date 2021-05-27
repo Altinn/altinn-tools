@@ -71,10 +71,10 @@ namespace RepoCleanup.Functions
         private static async Task CreateAllOrgsAndTeams(List<Organisation> organisations)
         {
             Console.WriteLine($"Found {organisations.Count} organisations in file.");
-            Console.Write($"Attempting to create all, ok? (y/n) ");
-            var confirm = Console.ReadLine().ToLower();
+            Console.Write($"Continue to create all organisations (existing orgs won't change)? (Y)es / (N)o: ");
+            var confirm = Console.ReadLine().ToUpper();
 
-            if (confirm == "n")
+            if (confirm == "N")
             {
                 Console.WriteLine("Aborting, 0 organisations created.");
                 return;
