@@ -9,7 +9,7 @@ using RepoCleanup.Utils;
 
 namespace RepoCleanup.Functions
 {
-    public static class CreateOrgWithTeams
+    public static class CreateOrgWithTeamsFunction
     {
         public static async Task Run()
         {

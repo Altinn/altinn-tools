@@ -36,16 +36,16 @@ namespace RepoCleanup
             switch (Console.ReadLine())
             {
                 case "1":
-                    await RemoveCodelistRepo.Run();
+                    await RemoveCodelistRepoFunction.Run();
                     return;
                 case "2":
-                    await CreateTeamForOrgs.Run();
+                    await CreateTeamForOrgsFunction.Run();
                     return;
                 case "3":
-                    await CreateOrgWithTeams.Run();
+                    await CreateOrgWithTeamsFunction.Run();
                     return;
                 case "4":
-                    await CreateOrgWithTeams.RunFromFile();
+                    await CreateOrgWithTeamsFunction.RunFromFile();
                     return;
                 case "5":
                     await CreateRepoFunction.Run();

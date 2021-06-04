@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace RepoCleanup.Functions
 {
-    public static class CreateTeamForOrgs
+    public static class CreateTeamForOrgsFunction
     {
         public static async Task Run()
         {

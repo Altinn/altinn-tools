@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace RepoCleanup.Functions
 {
-    public static class RemoveCodelistRepo
+    public static class RemoveCodelistRepoFunction
     {
         public static async Task Run()
         {
