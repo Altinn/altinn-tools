@@ -20,7 +20,7 @@ namespace RepoCleanup.Functions
             await CreateOrgAndTeams(org);
         }        
 
-        public async static Task ImportFromFile()
+        public async static Task RunFromFile()
         {
             WriteHeader();
 
