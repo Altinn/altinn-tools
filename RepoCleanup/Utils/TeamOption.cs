@@ -10,7 +10,7 @@ namespace RepoCleanup.Utils
             {
                 CanCreateOrgRepo = canCreateOrgRepo,
                 Description = description,
-                IncludesAllRepositories = true,
+                IncludesAllRepositories = false,
                 Name = name,
                 Permission = permission
             };

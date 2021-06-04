@@ -1,6 +1,4 @@
 ﻿using RepoCleanup.Models;
-
-using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
@@ -45,6 +43,14 @@ namespace RepoCleanup.Services
 
             return JsonSerializer.Deserialize<List<File>>(jsonString);
         }
+
+        public async Task<List<Team>> GetTeam(string org)
+        {
+            var response = await Globals.Client.GetAsync($"orgs/{org}/teams");
+            string json = await response.Content.ReadAsStringAsync();
+
+            return JsonSerializer.Deserialize<List<Team>>(json);
+        }        
 
         public static async Task<GiteaResponse> CreateTeam(string org, CreateTeamOption teamOption)
         {

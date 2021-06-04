@@ -91,7 +91,7 @@ namespace RepoCleanup.Functions
 
         private static bool CheckIfAllOrgs()
         {
-            Console.Write("\r\nShould the team be created for all organisations? (Y)es / (N)o: ");
+            Console.Write("\r\nShould this apply to all organisations? (Y)es / (N)o: ");
             bool updateAllOrgs = false;
 
             switch (Console.ReadLine().ToUpper())
