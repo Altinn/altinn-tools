@@ -16,6 +16,16 @@ namespace RepoCleanup.Functions
             Console.WriteLine();
         }
 
+        public static bool ShouldThisApplyToAllOrgs()
+        {
+            return YesNo("Should this apply to all organisations ?");
+        }
+
+        public static string CollectOrgName()
+        {
+            return CollectInput("Provide organisation name: ");
+        }
+
         public static bool ShouldRepoNameBePrefixedWithOrg()
         {
             return YesNo("Should repository name be prefixed with {org}-?");            
@@ -37,11 +47,6 @@ namespace RepoCleanup.Functions
             var inputValue = Console.ReadLine();
 
             return inputValue;
-        }
-
-        public static bool ShouldThisApplyToAllOrgs()
-        {
-            return YesNo("Should this apply to all organisations ?");            
         }
 
         public static void ConfirmWithExit(string confirmMessage, string exitMessage)

@@ -42,10 +42,8 @@ namespace RepoCleanup.Functions
             }
             else
             {
-                Console.Write("\r\nProvide organisation name: ");
-
-                string name = Console.ReadLine();
-                orgs.Add(name);
+                var org = SharedFunctionSnippets.CollectOrgName();                
+                orgs.Add(org);
             }
 
             return orgs;
