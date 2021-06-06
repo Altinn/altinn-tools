@@ -9,23 +9,17 @@ using System.Threading.Tasks;
 
 namespace RepoCleanup.Functions
 {
-    public class CreateRepoFunction
+    public static class CreateRepoFunction
     {
         public async static Task Run()
         {
-            WriteHeader();
+            SharedFunctionSnippets.WriteHeader("Create new repository for organisation(s)");
 
             var orgs = await CollectOrgInfo();
-            var prefixRepoNameWithOrg = CollectPrefixRepoNameWithOrg();
-            var repoName = CollectRepoName();
+            var prefixRepoNameWithOrg = SharedFunctionSnippets.ShouldRepoNameBePrefixedWithOrg();
+            var repoName = SharedFunctionSnippets.CollectRepoName();
 
-            Console.Write($"You are about to create a new repository for {orgs.Count} organisation(s). Proceed? (Y)es / (N)o: ");
-            var proceed = Console.ReadLine().ToUpper();
-            if(proceed == "N")
-            {
-                Console.WriteLine("Aborting, no repositories created.");
-                return;
-            }
+            SharedFunctionSnippets.ConfirmWithExit($"You are about to create a new repository for {orgs.Count} organisation(s). Proceed?", "Aborting, no repositories created.");            
 
             var command = new CreateRepoForOrgsCommand(orgs, repoName, prefixRepoNameWithOrg);
             var commandHander = new CreateRepoForOrgsCommandHandler(new GiteaService());
@@ -34,21 +28,11 @@ namespace RepoCleanup.Functions
             Console.WriteLine($"Created {result} repositories.");
         }
 
-        private static void WriteHeader()
-        {
-            Console.Clear();
-            Console.WriteLine();
-            Console.WriteLine("----------------------------------------------------------------");
-            Console.WriteLine("--------- Create new repository for organisation(s) ------------");
-            Console.WriteLine("----------------------------------------------------------------");
-            Console.WriteLine();
-        }
-
         private static async Task<List<string>> CollectOrgInfo()
         {
             List<string> orgs = new List<string>();
 
-            bool updateAllOrgs = CheckIfAllOrgs();
+            bool updateAllOrgs = SharedFunctionSnippets.ShouldThisApplyToAllOrgs();
 
             if (updateAllOrgs)
             {
@@ -64,48 +48,6 @@ namespace RepoCleanup.Functions
             }
 
             return orgs;
-        }
-
-        private static bool CollectPrefixRepoNameWithOrg()
-        {
-            Console.Write("Should repository name be prefixed with {org}-? (Y)es / (N)o: ");
-            var prefixWithOrg = Console.ReadLine().ToUpper();
-
-            if (prefixWithOrg == "Y")
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        private static string CollectRepoName()
-        {
-            Console.Write("Provide repository name: ");
-            var repositoryName = Console.ReadLine();
-
-            return repositoryName;
-        }
-
-        private static bool CheckIfAllOrgs()
-        {
-            Console.Write("\r\nShould this apply to all organisations? (Y)es / (N)o: ");
-            bool updateAllOrgs = false;
-
-            switch (Console.ReadLine().ToUpper())
-            {
-                case "Y":
-                    updateAllOrgs = true;
-                    break;
-                case "N":
-                    updateAllOrgs = false;
-                    break;
-                default:
-                    return CheckIfAllOrgs();
-            }
-            return updateAllOrgs;
         }
     }
 }
