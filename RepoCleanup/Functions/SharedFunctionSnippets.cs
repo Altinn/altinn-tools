@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace RepoCleanup.Functions
 {
@@ -23,7 +24,27 @@ namespace RepoCleanup.Functions
 
         public static string CollectOrgName()
         {
-            return CollectInput("Provide organisation name: ");
+            return CollectInput("Provide organisation name (short name): ");
+        }
+
+        public static string CollectOrgNameValidated()
+        {
+            bool isValid = false;
+            string username = string.Empty;
+
+            while (!isValid)
+            {
+                Console.Write("Provide user name for organisation (short name): ");
+                username = Console.ReadLine().ToLower();
+
+                isValid = Regex.IsMatch(username, "^[a-z]+[a-z0-9\\-]+[a-z0-9]$");
+                if (!isValid)
+                {
+                    Console.WriteLine("Invalid name. Letters a-z and character '-' are permitted. Name must start with a letter and end with a letter or number.");
+                }
+            }
+
+            return username;
         }
 
         public static bool ShouldRepoNameBePrefixedWithOrg()
@@ -47,6 +68,58 @@ namespace RepoCleanup.Functions
             var inputValue = Console.ReadLine();
 
             return inputValue;
+        }
+
+        public static string CollectWebsiteValidated()
+        {
+            bool isValid = false;
+            string website = string.Empty;
+
+            while (!isValid)
+            {
+                Console.Write("Provide website adress for org: ");
+                website = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(website))
+                {
+                    isValid = true;
+                }
+                else
+                {
+                    isValid = Regex.IsMatch(website, "^[a-zA-Z0-9\\-._/:]*$");
+                }
+                if (!isValid)
+                {
+                    Console.WriteLine("Invalid website adress. Letters a-z and characters:'-', '_', '.', '/', ':' are permitted.");
+                }
+            }
+
+            return website;
+        }
+
+        public static string CollectPathValidated(string inputLabel, string defaultPathToOrgsJsonFile)
+        {
+            bool isValid = false;
+            string pathToOrgsJsonFile = string.Empty;
+
+            while (!isValid)
+            {
+                Console.Write(inputLabel);
+                pathToOrgsJsonFile = Console.ReadLine();
+                pathToOrgsJsonFile = string.IsNullOrEmpty(pathToOrgsJsonFile) ? defaultPathToOrgsJsonFile : pathToOrgsJsonFile;
+
+                if (System.IO.File.Exists(pathToOrgsJsonFile))
+                {
+                    Console.WriteLine("Can't find the specified file!");
+                    isValid = false;
+                }
+                else
+                {
+                    isValid = true;
+                }
+            }
+
+            return pathToOrgsJsonFile;
         }
 
         public static void ConfirmWithExit(string confirmMessage, string exitMessage)

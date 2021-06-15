@@ -25,12 +25,7 @@ namespace RepoCleanup.Functions
             WriteHeader();
 
             var defaultPathToOrgsJsonFile = @"data/orgs.json";
-            var (pathToOrgsJsonFile, fileExits) = CollectPathToOrgsFile(defaultPathToOrgsJsonFile);
-
-            if (!fileExits)
-            {
-                return;
-            }
+            var pathToOrgsJsonFile = SharedFunctionSnippets.CollectPathValidated("Path to JSON file with array of organisations. Leave empty to use default data\\orgs.json: ", defaultPathToOrgsJsonFile);
 
             List<Organisation> organisations = ParseOrganisationsFromFile(pathToOrgsJsonFile);
 
@@ -39,25 +34,7 @@ namespace RepoCleanup.Functions
 
         private static void WriteHeader()
         {
-            Console.Clear();
-            Console.WriteLine("\r\n----------------------------------------------------------------");
-            Console.WriteLine("------------ Create new organisation(s) with teams ----------------");
-            Console.WriteLine("----------------------------------------------------------------");
-        }
-
-        private static Tuple<string, bool> CollectPathToOrgsFile(string defaultPathToOrgsJsonFile)
-        {
-            Console.Write("Path to JSON file with array of organisations. Leave empty to use default data\\orgs.json: ");
-            var pathToOrgsJsonFile = Console.ReadLine();
-            pathToOrgsJsonFile = string.IsNullOrEmpty(pathToOrgsJsonFile) ? defaultPathToOrgsJsonFile : pathToOrgsJsonFile;
-
-            if (!System.IO.File.Exists(pathToOrgsJsonFile))
-            {
-                Console.WriteLine("Can't find the specified file!");
-                return new Tuple<string, bool>("", false);
-            }
-
-            return new Tuple<string, bool>(pathToOrgsJsonFile, true);
+            SharedFunctionSnippets.WriteHeader("Create new organisation(s) with teams");
         }
 
         private static List<Organisation> ParseOrganisationsFromFile(string pathToOrgsJsonFile)
@@ -95,56 +72,22 @@ namespace RepoCleanup.Functions
 
         private static Organisation CollectOrgInfo()
         {
-            bool isValid = false;
-            string username = string.Empty;
 
-            while (!isValid)
-            {
-                Console.Write("\r\nSet username (shortname) for org: ");
-                username = Console.ReadLine().ToLower();
-
-                isValid = Regex.IsMatch(username, "^[a-z]+[a-z0-9\\-]+[a-z0-9]$");
-                if (!isValid)
-                {
-                    Console.WriteLine("Invalid name. Letters a-z and character '-' are permitted. Username must start with a letter and end with a letter or number.");
-                }
-            }
-
-            string fullname = string.Empty;
-
-            Console.Write("\r\nSet fullname for org: ");
-            fullname = Console.ReadLine();
-
-            isValid = false;
-            string website = string.Empty;
-
-            while (!isValid)
-            {
-                Console.Write("\r\nSet website for org: ");
-                website = Console.ReadLine();
-
-                if (string.IsNullOrEmpty(website))
-                {
-                    isValid = true;
-                }
-                else
-                {
-                    isValid = Regex.IsMatch(website, "^[a-zA-Z0-9\\-._/:]*$");
-                }
-                if (!isValid)
-                {
-                    Console.WriteLine("Invalid website adress. Letters a-z and characters:'-', '_', '.', '/', ':' are permitted.");
-                }
-            }
+            string username = SharedFunctionSnippets.CollectOrgNameValidated();
+            string fullname = SharedFunctionSnippets.CollectInput("Provide fullname for org: ");
+            string website = SharedFunctionSnippets.CollectWebsiteValidated();
 
             Console.WriteLine();
 
-            Organisation org = new Organisation();
-            org.Username = username;
-            org.Fullname = fullname;
-            org.Website = website;
-            org.Visibility = "public";
-            org.RepoAdminChangeTeamAccess = false;
+            Organisation org = new Organisation()
+            {
+                Username = username,
+                Fullname = fullname,
+                Website = website,
+                Visibility = "public",
+                RepoAdminChangeTeamAccess = false
+            };
+
             return org;
         }
 
