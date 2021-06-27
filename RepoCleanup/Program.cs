@@ -26,6 +26,7 @@ namespace RepoCleanup
             Console.WriteLine("5) Create repository for organisation(s)");
             Console.WriteLine("6) Add existing team to repository for organisation(s)");
             Console.WriteLine("7) Migrate Altinn II XSD Schema for organisation(s)");
+            Console.WriteLine("8) Delete repository for organisation(s)");
             Console.WriteLine("9) Exit");
             Console.Write("\r\nSelect an option: ");
 
@@ -51,6 +52,9 @@ namespace RepoCleanup
                     return;
                 case "7":
                     await MigrateXsdSchemasFunction.Run();
+                    return;
+                case "8":
+                    await DeleteDatamodelsRepoFunction.Run();
                     return;
                 case "9":
                 default:

@@ -15,7 +15,7 @@ namespace RepoCleanup.Functions
         {
             SharedFunctionSnippets.WriteHeader("Create new repository for organisation(s)");
 
-            var orgs = await CollectOrgInfo();
+            var orgs = await SharedFunctionSnippets.CollectOrgInfo();
             var prefixRepoNameWithOrg = SharedFunctionSnippets.ShouldRepoNameBePrefixedWithOrg();
             var repoName = SharedFunctionSnippets.CollectRepoName();
 
@@ -26,28 +26,6 @@ namespace RepoCleanup.Functions
             var result = await commandHander.Handle(command);
 
             Console.WriteLine($"Created {result} repositories.");
-        }
-
-        private static async Task<List<string>> CollectOrgInfo()
-        {
-            List<string> orgs = new List<string>();
-
-            bool updateAllOrgs = SharedFunctionSnippets.ShouldThisApplyToAllOrgs();
-
-            if (updateAllOrgs)
-            {
-                List<Organisation> organisations = await GiteaService.GetOrganisations();
-                orgs.AddRange(organisations.Select(o => o.Username));
-            }
-            else
-            {
-                Console.Write("\r\nProvide organisation name: ");
-
-                string name = Console.ReadLine();
-                orgs.Add(name);
-            }
-
-            return orgs;
-        }
+        }        
     }
 }

@@ -6,39 +6,35 @@ using System.Threading.Tasks;
 
 namespace RepoCleanup.Application.CommandHandlers
 {
-    public class CreateRepoForOrgsCommandHandler
+    public class DeleteRepoForOrgsCommandHandler
     {
         private readonly GiteaService _giteaService;
-        public CreateRepoForOrgsCommandHandler(GiteaService giteaService)
+        public DeleteRepoForOrgsCommandHandler(GiteaService giteaService)
         {
             _giteaService = giteaService;
         }
 
-        public async Task<int> Handle(CreateRepoForOrgsCommand command)
+        public async Task<int> Handle(DeleteRepoForOrgsCommand command)
         {
-            var reposCreatedCounter = 0;
-            var authenticatedUser = await _giteaService.GetAuthenticatedUser();
+            var reposDeletedCounter = 0;            
 
             foreach (var org in command.Orgs)
             {
                 var repoName = command.PrefixRepoNameWithOrg ? $"{org}-{command.RepoName}" : command.RepoName;
 
                 var giteaResponse = await _giteaService.GetRepo(org, repoName);
-                if(giteaResponse.StatusCode == HttpStatusCode.NotFound)
+                if(giteaResponse.StatusCode == HttpStatusCode.OK)
                 {
-                    var createRepoOption = GetCreateRepoOption(repoName);
-
-                    giteaResponse = await _giteaService.CreateRepo(createRepoOption);
+                    giteaResponse = await _giteaService.DeleteRepository(org, repoName);
                     
                     if(giteaResponse.Success)
-                    {
-                        await _giteaService.TransferRepoOwnership(authenticatedUser.Username, repoName, org);
-                        reposCreatedCounter++;
+                    {                        
+                        reposDeletedCounter++;
                     }
                 }                
             }
 
-            return reposCreatedCounter;
+            return reposDeletedCounter;
         }
 
         private CreateRepoOption GetCreateRepoOption(string repoName)

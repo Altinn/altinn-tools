@@ -1,4 +1,9 @@
-﻿using System;
+﻿using RepoCleanup.Models;
+using RepoCleanup.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace RepoCleanup.Functions
 {
@@ -37,6 +42,28 @@ namespace RepoCleanup.Functions
             var inputValue = Console.ReadLine();
 
             return inputValue;
+        }
+
+        public static async Task<List<string>> CollectOrgInfo()
+        {
+            List<string> orgs = new List<string>();
+
+            bool updateAllOrgs = ShouldThisApplyToAllOrgs();
+
+            if (updateAllOrgs)
+            {
+                List<Organisation> organisations = await GiteaService.GetOrganisations();
+                orgs.AddRange(organisations.Select(o => o.Username));
+            }
+            else
+            {
+                Console.Write("\r\nProvide organisation name: ");
+
+                string name = Console.ReadLine();
+                orgs.Add(name);
+            }
+
+            return orgs;
         }
 
         public static bool ShouldThisApplyToAllOrgs()

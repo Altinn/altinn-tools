@@ -1,5 +1,6 @@
 ﻿using RepoCleanup.Models;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -54,110 +55,60 @@ namespace RepoCleanup.Services
 
         public static async Task<GiteaResponse> CreateTeam(string org, CreateTeamOption teamOption)
         {
-            GiteaResponse result = new GiteaResponse();
-
             HttpContent content = new StringContent(JsonSerializer.Serialize(teamOption, Globals.SerializerOptions), Encoding.UTF8, "application/json");
-            HttpResponseMessage res = await Globals.Client.PostAsync($"orgs/{org}/teams", content);
+            HttpResponseMessage httpResponse = await Globals.Client.PostAsync($"orgs/{org}/teams", content);
 
-            if (res.StatusCode == System.Net.HttpStatusCode.Created)
-            {
-                result.Success = true;
-                result.ResponseMessage = await res.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                result.ResponseMessage = await res.Content.ReadAsStringAsync();
-                result.Success = false;
-                result.StatusCode = res.StatusCode;
-            }
+            GiteaResponse giteResponse = await CreateGiteaResponse(httpResponse, HttpStatusCode.Created);            
 
-            return result;
+            return giteResponse;
         }
 
         public static async Task<GiteaResponse> CreateOrg(Organisation organisation)
         {
-            GiteaResponse result = new GiteaResponse();
-
             HttpContent content = new StringContent(JsonSerializer.Serialize(organisation, Globals.SerializerOptions), Encoding.UTF8, "application/json");
-            HttpResponseMessage res = await Globals.Client.PostAsync($"orgs", content);
+            HttpResponseMessage httpResponse = await Globals.Client.PostAsync($"orgs", content);
 
-            if (res.StatusCode == System.Net.HttpStatusCode.Created)
-            {
-                result.Success = true;
-                result.ResponseMessage = await res.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                result.ResponseMessage = await res.Content.ReadAsStringAsync();
-                result.Success = false;
-                result.StatusCode = res.StatusCode;
-            }
+            GiteaResponse giteaResponse = await CreateGiteaResponse(httpResponse, HttpStatusCode.Created);
 
-            return result;
+            return giteaResponse;
         }
 
         public async Task<GiteaResponse> CreateRepo(CreateRepoOption createRepoOption) 
         {
-            GiteaResponse result = new GiteaResponse();
-
             HttpContent content = new StringContent(JsonSerializer.Serialize(createRepoOption, Globals.SerializerOptions), Encoding.UTF8, "application/json");
-            HttpResponseMessage res = await Globals.Client.PostAsync($"user/repos/", content);
+            HttpResponseMessage httpResponse = await Globals.Client.PostAsync($"user/repos/", content);
 
-            if (res.StatusCode == System.Net.HttpStatusCode.Created)
-            {
-                result.Success = true;
-                result.ResponseMessage = await res.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                result.ResponseMessage = await res.Content.ReadAsStringAsync();
-                result.Success = false;
-                result.StatusCode = res.StatusCode;
-            }
+            GiteaResponse result = await CreateGiteaResponse(httpResponse, HttpStatusCode.Created);
 
             return result;
         }
 
         public async Task<GiteaResponse> TransferRepoOwnership(string owner, string repoName, string newOwner)
         {
-            GiteaResponse result = new GiteaResponse();
-
             HttpContent content = new StringContent(JsonSerializer.Serialize(new TransferRepoOption(newOwner), Globals.SerializerOptions), Encoding.UTF8, "application/json");
-            HttpResponseMessage res = await Globals.Client.PostAsync($"repos/{owner}/{repoName}/transfer", content);
+            HttpResponseMessage httpResponse = await Globals.Client.PostAsync($"repos/{owner}/{repoName}/transfer", content);
 
-            if (res.StatusCode == System.Net.HttpStatusCode.Accepted)
-            {
-                result.Success = true;
-                result.ResponseMessage = await res.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                result.ResponseMessage = await res.Content.ReadAsStringAsync();
-                result.Success = false;
-                result.StatusCode = res.StatusCode;
-            }
+            GiteaResponse giteaResponse = await CreateGiteaResponse(httpResponse, HttpStatusCode.Accepted);
 
-            return result;
+            return giteaResponse;
         }
 
         public async Task<GiteaResponse> GetRepo(string org, string repoName)
         {
-            HttpResponseMessage res = await Globals.Client.GetAsync($"repos/{org}/{repoName}");
+            HttpResponseMessage httpResponse = await Globals.Client.GetAsync($"repos/{org}/{repoName}");
 
-            GiteaResponse result = new GiteaResponse();
-            if (res.StatusCode == System.Net.HttpStatusCode.OK)
-            {
-                result.Success = true;
-                result.ResponseMessage = await res.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                result.ResponseMessage = await res.Content.ReadAsStringAsync();
-                result.Success = false;
-                result.StatusCode = res.StatusCode;
-            }
+            GiteaResponse giteaResponse = await CreateGiteaResponse(httpResponse, HttpStatusCode.OK);
 
-            return result;
+            return giteaResponse;
+        }
+
+        public async Task<GiteaResponse> DeleteRepository(string org, string repoName)
+        {
+            HttpResponseMessage httpResponse = await Globals.Client.DeleteAsync($"repos/{org}/{repoName}");
+            
+            GiteaResponse giteaResponse = await CreateGiteaResponse(httpResponse, HttpStatusCode.NoContent);
+
+            return giteaResponse;
         }
 
         public async Task<GiteaResponse> AddTeamToRepo(string org, string repoName, string teamName)
@@ -185,18 +136,23 @@ namespace RepoCleanup.Services
         {            
             HttpResponseMessage httpResponse = await Globals.Client.GetAsync($"repos/{org}/{repoName}/teams/{teamName}");
 
+            GiteaResponse giteaResponse = await CreateGiteaResponse(httpResponse, HttpStatusCode.OK);
+
+            return giteaResponse;
+        }
+
+        private static async Task<GiteaResponse> CreateGiteaResponse(HttpResponseMessage httpResponse, HttpStatusCode httpStatusForSuccess )
+        {
             GiteaResponse giteaResponse = new GiteaResponse();
-            if (httpResponse.StatusCode == System.Net.HttpStatusCode.OK)
+            giteaResponse.Success = false;
+
+            if (httpResponse.StatusCode == httpStatusForSuccess)
             {
                 giteaResponse.Success = true;
-                giteaResponse.ResponseMessage = await httpResponse.Content.ReadAsStringAsync();
             }
-            else
-            {
-                giteaResponse.ResponseMessage = await httpResponse.Content.ReadAsStringAsync();
-                giteaResponse.Success = false;
-                giteaResponse.StatusCode = httpResponse.StatusCode;
-            }
+
+            giteaResponse.StatusCode = httpResponse.StatusCode;
+            giteaResponse.ResponseMessage = await httpResponse.Content.ReadAsStringAsync();
 
             return giteaResponse;
         }

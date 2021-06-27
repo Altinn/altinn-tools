@@ -2,9 +2,9 @@
 
 namespace RepoCleanup.Application.Commands
 {
-    public class CreateRepoForOrgsCommand
+    public class DeleteRepoForOrgsCommand
     {
-        public CreateRepoForOrgsCommand(List<string> orgs, string repoName, bool prefixRepoNameWithOrg)
+        public DeleteRepoForOrgsCommand(List<string> orgs, string repoName, bool prefixRepoNameWithOrg)
         {
             Orgs = orgs;
             RepoName = repoName;
