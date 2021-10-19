@@ -14,7 +14,7 @@ namespace RepoCleanup.Functions
     {
         public static async Task Run()
         {
-            NotALogger logger = new ("MigrateXsdSchemas - Log.txt");
+            NotALogger logger = new("MigrateXsdSchemas - Log.txt");
             logger.AddNothing();
 
             SharedFunctionSnippets.WriteHeader("Migrating XSD Schemas from active services in Altinn II");
@@ -27,8 +27,8 @@ namespace RepoCleanup.Functions
 
             try
             {
-                MigrateAltinn2FormSchemasCommandHandler migrateAltinn2FormSchemasCommandHandler = new (new GiteaService(), logger);
-                MigrateAltinn2FormSchemasCommand migrateAltinn2FormSchemasCommand = new (organisations, basePath);
+                MigrateAltinn2FormSchemasCommandHandler migrateAltinn2FormSchemasCommandHandler = new(new GiteaService(), logger);
+                MigrateAltinn2FormSchemasCommand migrateAltinn2FormSchemasCommand = new(organisations, basePath);
                 await migrateAltinn2FormSchemasCommandHandler.Handle(migrateAltinn2FormSchemasCommand);
             }
             catch (Exception exception)
@@ -45,7 +45,7 @@ namespace RepoCleanup.Functions
         private static string CollectMigrationWorkFolder()
         {
             Console.WriteLine("This operation requires a folder to which it can clone the datamodels repositories.");
-            string basePath = SharedFunctionSnippets.CollectInput("Provide folder name (should be empty): ");
+            string basePath = SharedFunctionSnippets.CollectInput("Provide folder path (folder should be empty): ");
 
             if (!Directory.Exists(basePath))
             {

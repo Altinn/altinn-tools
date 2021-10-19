@@ -7,7 +7,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using System.Xml.Schema;
 using System.Xml.XPath;
+
+using Altinn.Studio.DataModeling.Converter.Xml;
+
+using Json.Schema;
 
 using LibGit2Sharp;
 
@@ -58,7 +63,7 @@ namespace RepoCleanup.Application.CommandHandlers
 
                 foreach (Altinn2Service service in organisationReportingServices)
                 {
-                    Dictionary<string, string> serviceSchemas = await DownloadFormSchemasForService(service, repoFolder);
+                    Dictionary<string, string> serviceSchemas = await DownloadAndConvertFormSchemasForService(service, repoFolder);
 
                     schemaList = schemaList.Concat(serviceSchemas.Where(kvp => !schemaList.ContainsKey(kvp.Key)))
                         .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -104,7 +109,7 @@ namespace RepoCleanup.Application.CommandHandlers
             await System.IO.File.WriteAllTextAsync($"{repoFolder}\\README.md", reportBuilder.ToString());
         }
 
-        private async Task<Dictionary<string, string>> DownloadFormSchemasForService(Altinn2Service service, string repositoryFolder)
+        private async Task<Dictionary<string, string>> DownloadAndConvertFormSchemasForService(Altinn2Service service, string repositoryFolder)
         {
             _logger.AddInformation($"Service: {service.ServiceName}");
 
@@ -122,7 +127,7 @@ namespace RepoCleanup.Application.CommandHandlers
                 }
 
                 string providerName = FindProvider(xsdDocument, formMetaData.DataFormatProviderType);
-                string schemaVersionFolder = $"{repositoryFolder}\\{providerName}\\" 
+                string schemaVersionFolder = $"{repositoryFolder}\\{providerName}\\"
                     + $"{formMetaData.DataFormatID}\\{formMetaData.DataFormatVersion}";
 
                 Directory.CreateDirectory(schemaVersionFolder);
@@ -134,12 +139,13 @@ namespace RepoCleanup.Application.CommandHandlers
                 // The schema might have been downloaded under a separate service.
                 if (!System.IO.File.Exists(filePath))
                 {
-                    using (FileStream fileStream = new (filePath, FileMode.OpenOrCreate))
+                    using (FileStream fileStream = new(filePath, FileMode.OpenOrCreate))
                     {
                         await xsdDocument.SaveAsync(fileStream, SaveOptions.None, CancellationToken.None);
                     }
                 }
 
+                await ConvertXmlToJsonSchema(filePath, fileName);
                 _logger.AddInformation($"Schema: {formMetaData.DataFormatID}-{formMetaData.DataFormatVersion} Downloaded.");
 
                 if (!schemas.ContainsKey(filePath.Substring(repositoryFolder.Length)))
@@ -151,13 +157,45 @@ namespace RepoCleanup.Application.CommandHandlers
             return schemas;
         }
 
+        private async Task ConvertXmlToJsonSchema(string filePath, string fileName)
+        {
+            try
+            {
+                XmlSchemaToJsonSchemaConverter converter = new();
+                JsonSchema json = converter.Convert(LoadXmlSchemaFromPath(filePath));
+
+                await System.IO.File.WriteAllTextAsync(
+                    filePath.Replace("xsd", "schema.json"),
+                    System.Text.Json.JsonSerializer.Serialize(json, json.GetType(),
+                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+
+            }
+            catch (Exception e)
+            {
+                _logger.AddInformation($"Converting {fileName} to jsonSchema failed with exception {e}.");
+            }
+        }
+
+
+        private static XmlSchema LoadXmlSchemaFromPath(string filePath)
+        {
+            using XmlReader xmlReader = XmlReader.Create(System.IO.File.OpenRead(filePath));
+            var xmlSchema = XmlSchema.Read(xmlReader, (_, _) => { });
+
+            var schemaSet = new XmlSchemaSet();
+            schemaSet.Add(xmlSchema);
+            schemaSet.Compile();
+
+            return xmlSchema;
+        }
+
         private string FindProvider(XDocument xsdDocument, string dataFormatProviderType)
         {
             XmlNamespaceManager namespaceManager = new XmlNamespaceManager(new NameTable());
             namespaceManager.AddNamespace("xsd", "http://www.w3.org/2001/XMLSchema");
 
             XElement dataFormatProviderElement = xsdDocument.XPathSelectElement(
-                "xsd:schema/xsd:complexType/xsd:attribute[@name='dataFormatProvider']", 
+                "xsd:schema/xsd:complexType/xsd:attribute[@name='dataFormatProvider']",
                 namespaceManager);
 
             string foundProvider = dataFormatProviderType;
@@ -226,7 +264,7 @@ namespace RepoCleanup.Application.CommandHandlers
                 Commit commit = repo.Commit("Added XSD schemas copied from Altinn II", author, author);
             }
         }
-        
+
         private static void PushChanges(string localRepoPath)
         {
             using (LibGit2Sharp.Repository repo = new(localRepoPath))
