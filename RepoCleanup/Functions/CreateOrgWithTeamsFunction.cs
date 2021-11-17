@@ -39,10 +39,7 @@ namespace RepoCleanup.Functions
 
         private static void WriteHeader()
         {
-            Console.Clear();
-            Console.WriteLine("\r\n----------------------------------------------------------------");
-            Console.WriteLine("------------ Create new organisation(s) with teams ----------------");
-            Console.WriteLine("----------------------------------------------------------------");
+            SharedFunctionSnippets.WriteHeader("Create new organisation(s) with teams");
         }
 
         private static Tuple<string, bool> CollectPathToOrgsFile(string defaultPathToOrgsJsonFile)
