@@ -12,7 +12,7 @@ namespace RepoCleanup.Functions
         {
             SharedFunctionSnippets.WriteHeader("Delete datamodels repo for all oranisations");
 
-            var orgs = await SharedFunctionSnippets.CollectOrgInfo();
+            var orgs = await SharedFunctionSnippets.CollectExistingOrgsInfo();
             var prefixRepoNameWithOrg = SharedFunctionSnippets.ShouldRepoNameBePrefixedWithOrg();
             var repoName = SharedFunctionSnippets.CollectRepoName();
 

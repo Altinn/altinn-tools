@@ -44,7 +44,7 @@ namespace RepoCleanup.Functions
             return inputValue;
         }
 
-        public static async Task<List<string>> CollectOrgInfo()
+        public static async Task<List<string>> CollectExistingOrgsInfo()
         {
             List<string> orgs = new List<string>();
 

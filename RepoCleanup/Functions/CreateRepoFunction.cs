@@ -15,7 +15,7 @@ namespace RepoCleanup.Functions
         {
             SharedFunctionSnippets.WriteHeader("Create new repository for organisation(s)");
 
-            var orgs = await SharedFunctionSnippets.CollectOrgInfo();
+            var orgs = await SharedFunctionSnippets.CollectExistingOrgsInfo();
             var prefixRepoNameWithOrg = SharedFunctionSnippets.ShouldRepoNameBePrefixedWithOrg();
             var repoName = SharedFunctionSnippets.CollectRepoName();
 

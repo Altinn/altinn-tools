@@ -20,7 +20,7 @@ namespace RepoCleanup.Functions
             SharedFunctionSnippets.WriteHeader("Migrating XSD Schemas from active services in Altinn II");
 
             string basePath = CollectMigrationWorkFolder();
-            List<string> organisations = await SharedFunctionSnippets.CollectOrgInfo();
+            List<string> organisations = await SharedFunctionSnippets.CollectExistingOrgsInfo();
 
             logger.AddInformation($"Started!");
             logger.AddInformation($"Using '{basePath}' as base path for all organisations");
