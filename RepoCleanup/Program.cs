@@ -75,20 +75,20 @@ namespace RepoCleanup
         private static void SetUpClient()
         {
             string url = string.Empty;
-            Enums.Environment env = SelectEnvironment();
+            Application.Models.Environment env = SelectEnvironment();
 
             switch (env)
             {
-                case Enums.Environment.Development:
+                case Application.Models.Environment.Development:
                     url = "https://dev.altinn.studio/repos/api/v1/";
                     break;
-                case Enums.Environment.Staging:
+                case Application.Models.Environment.Staging:
                     url = "https://staging.altinn.studio/repos/api/v1/";
                     break;
-                case Enums.Environment.Production:
+                case Application.Models.Environment.Production:
                     url = "https://altinn.studio/repos/api/v1/";
                     break;
-                case Enums.Environment.Local:
+                case Application.Models.Environment.Local:
                     url = "http://altinn3.no/repos/api/v1/";
                     break;
                 default:
@@ -105,24 +105,24 @@ namespace RepoCleanup
             Globals.RepositoryBaseUrl = GetRepositoryBaseUrl(env);
         }
 
-        private static string GetRepositoryBaseUrl(Enums.Environment env)
+        private static string GetRepositoryBaseUrl(Application.Models.Environment env)
         {
             switch (env)
             {
-                case Enums.Environment.Development:
+                case Application.Models.Environment.Development:
                     return "https://dev.altinn.studio/repos/";
-                case Enums.Environment.Staging:
+                case Application.Models.Environment.Staging:
                     return "https://staging.altinn.studio/repos/";
-                case Enums.Environment.Production:
+                case Application.Models.Environment.Production:
                     return "https://altinn.studio/repos/";
-                case Enums.Environment.Local:
+                case Application.Models.Environment.Local:
                     return "http://altinn3.no/repos/";
             }
             
             return string.Empty;
         }
 
-        private static Enums.Environment SelectEnvironment()
+        private static Application.Models.Environment SelectEnvironment()
         {
             Console.WriteLine();
             Console.WriteLine();
@@ -137,19 +137,19 @@ namespace RepoCleanup
             switch (Console.ReadLine())
             {
                 case "1":
-                    return Enums.Environment.Development;
+                    return Application.Models.Environment.Development;
                 case "2":
-                    return Enums.Environment.Staging;
+                    return Application.Models.Environment.Staging;
                 case "3":
-                    return Enums.Environment.Production;
+                    return Application.Models.Environment.Production;
                 case "4":
-                    return Enums.Environment.Local;
+                    return Application.Models.Environment.Local;
                 default:
-                    return Enums.Environment.Development;
+                    return Application.Models.Environment.Development;
             }
         }
 
-        private static string GetAccessToken(Enums.Environment env)
+        private static string GetAccessToken(Application.Models.Environment env)
         {
             string url = string.Empty;
 
@@ -157,16 +157,16 @@ namespace RepoCleanup
             Console.WriteLine("The application requires an API key with admin access.");
             switch (env)
             {
-                case Enums.Environment.Development:
+                case Application.Models.Environment.Development:
                     url = "https://dev.altinn.studio/repos/user/settings/applications";
                     break;
-                case Enums.Environment.Staging:
+                case Application.Models.Environment.Staging:
                     url = "https://staging.altinn.studio/repos/user/settings/applications";
                     break;
-                case Enums.Environment.Production:
+                case Application.Models.Environment.Production:
                     url = "https://altinn.studio/repos/user/settings/applications";
                     break;
-                case Enums.Environment.Local:
+                case Application.Models.Environment.Local:
                     url = "http://altinn3.no/repos/user/settings/applications";
                     break;
             }
