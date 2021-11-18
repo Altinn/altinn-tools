@@ -8,6 +8,10 @@ namespace RepoCleanup
 {
     public class Program
     {
+        protected Program()
+        {
+        }
+
         static async Task Main(string[] args)
         {
             var logger = Globals.CreateLogger<Program>();

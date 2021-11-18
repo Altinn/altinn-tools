@@ -18,7 +18,7 @@ namespace RepoCleanup
 
         public static string RepositoryBaseUrl { get; internal set; }
 
-        public static JsonSerializerOptions SerializerOptions = new JsonSerializerOptions
+        public static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
             Converters =
