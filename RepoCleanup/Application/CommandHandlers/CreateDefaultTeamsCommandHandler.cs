@@ -1,5 +1,4 @@
 ﻿using RepoCleanup.Application.Commands;
-using RepoCleanup.Models;
 using RepoCleanup.Infrastructure.Clients.Gitea;
 using RepoCleanup.Utils;
 using System.Collections.Generic;

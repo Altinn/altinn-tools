@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
-using System.Text;
 
-namespace RepoCleanup.Models
+namespace RepoCleanup.Infrastructure.Clients.Gitea
 {
     public class GiteaResponse
     {

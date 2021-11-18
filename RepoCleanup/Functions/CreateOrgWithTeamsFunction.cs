@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using RepoCleanup.Infrastructure.Clients.Gitea;
-using RepoCleanup.Models;
 using RepoCleanup.Utils;
 
 namespace RepoCleanup.Functions
