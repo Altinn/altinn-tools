@@ -1,6 +1,5 @@
 ﻿using RepoCleanup.Application.Commands;
-using RepoCleanup.Models;
-using RepoCleanup.Services;
+using RepoCleanup.Infrastructure.Clients.Gitea;
 using System.Net;
 using System.Threading.Tasks;
 

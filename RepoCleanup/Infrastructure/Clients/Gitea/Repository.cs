@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 
-namespace RepoCleanup.Models
+namespace RepoCleanup.Infrastructure.Clients.Gitea
 {
     public class Repository
     {

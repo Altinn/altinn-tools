@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace RepoCleanup.Models
+namespace RepoCleanup.Infrastructure.Clients.Altinn2
 {
     public class Altinn2ReportingService
     {

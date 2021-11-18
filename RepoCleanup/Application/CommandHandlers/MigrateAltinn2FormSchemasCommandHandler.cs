@@ -12,8 +12,8 @@ using System.Xml.XPath;
 using LibGit2Sharp;
 
 using RepoCleanup.Application.Commands;
-using RepoCleanup.Models;
-using RepoCleanup.Services;
+using RepoCleanup.Infrastructure.Clients.Altinn2;
+using RepoCleanup.Infrastructure.Clients.Gitea;
 using RepoCleanup.Utils;
 
 namespace RepoCleanup.Application.CommandHandlers

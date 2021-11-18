@@ -1,4 +1,4 @@
-using RepoCleanup.Models;
+using RepoCleanup.Infrastructure.Clients.Gitea;
 
 namespace RepoCleanup.Utils
 {

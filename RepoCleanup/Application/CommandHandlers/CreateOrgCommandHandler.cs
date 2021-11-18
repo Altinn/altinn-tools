@@ -1,6 +1,6 @@
 ﻿using RepoCleanup.Application.Commands;
+using RepoCleanup.Infrastructure.Clients.Gitea;
 using RepoCleanup.Models;
-using RepoCleanup.Services;
 using System.Threading.Tasks;
 
 namespace RepoCleanup.Application.CommandHandlers

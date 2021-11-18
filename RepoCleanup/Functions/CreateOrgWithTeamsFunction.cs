@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using RepoCleanup.Infrastructure.Clients.Gitea;
 using RepoCleanup.Models;
-using RepoCleanup.Services;
 using RepoCleanup.Utils;
 
 namespace RepoCleanup.Functions

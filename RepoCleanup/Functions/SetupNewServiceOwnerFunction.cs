@@ -1,6 +1,6 @@
 ﻿using RepoCleanup.Application.CommandHandlers;
 using RepoCleanup.Application.Commands;
-using RepoCleanup.Services;
+using RepoCleanup.Infrastructure.Clients.Gitea;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -16,7 +16,7 @@ namespace RepoCleanup.Functions
             var giteaService = new GiteaService();
 
             // Create new org
-            Models.Organisation org = SharedFunctionSnippets.CollectNewOrgInfo();
+            Organisation org = SharedFunctionSnippets.CollectNewOrgInfo();
             var createOrgCommandHandler = new CreateOrgCommandHandler(giteaService);
             bool orgCreated = await createOrgCommandHandler.Handle(new CreateOrgCommand(org.Username, org.Fullname, org.Website));
 

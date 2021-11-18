@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 using RepoCleanup.Application.Commands;
 using RepoCleanup.Application.CommandHandlers;
-using RepoCleanup.Services;
 using RepoCleanup.Utils;
+using RepoCleanup.Infrastructure.Clients.Gitea;
 
 namespace RepoCleanup.Functions
 {

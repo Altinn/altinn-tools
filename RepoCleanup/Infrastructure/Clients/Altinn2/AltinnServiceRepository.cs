@@ -5,9 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-using RepoCleanup.Models;
-
-namespace RepoCleanup.Services
+namespace RepoCleanup.Infrastructure.Clients.Altinn2
 {
     /// <summary>
     /// A simple tool for downloading metadata informasion about services in Altinn 2.
@@ -76,8 +74,8 @@ namespace RepoCleanup.Services
             if (response.IsSuccessStatusCode)
             {
                 XDocument doc = await XDocument.LoadAsync(
-                    await response.Content.ReadAsStreamAsync(), 
-                    LoadOptions.None, 
+                    await response.Content.ReadAsStreamAsync(),
+                    LoadOptions.None,
                     CancellationToken.None);
 
                 return doc;
@@ -93,7 +91,7 @@ namespace RepoCleanup.Services
 
         private static string FormXsdUrl(Altinn2Service altinnResource, Altinn2Form formMetaData)
         {
-            return ReportingServiceMetadataUrl(altinnResource) 
+            return ReportingServiceMetadataUrl(altinnResource)
                 + $"/forms/{formMetaData.DataFormatID}/{formMetaData.DataFormatVersion}/xsd";
         }
     }

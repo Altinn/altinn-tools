@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace RepoCleanup.Services
+namespace RepoCleanup.Infrastructure.Clients.Gitea
 {
     public class GiteaService
     {
@@ -51,14 +51,14 @@ namespace RepoCleanup.Services
             string json = await response.Content.ReadAsStringAsync();
 
             return JsonSerializer.Deserialize<List<Team>>(json);
-        }        
+        }
 
         public async Task<GiteaResponse> CreateTeam(string org, CreateTeamOption teamOption)
         {
             HttpContent content = new StringContent(JsonSerializer.Serialize(teamOption, Globals.SerializerOptions), Encoding.UTF8, "application/json");
             HttpResponseMessage httpResponse = await Globals.Client.PostAsync($"orgs/{org}/teams", content);
 
-            GiteaResponse giteResponse = await CreateGiteaResponse(httpResponse, HttpStatusCode.Created);            
+            GiteaResponse giteResponse = await CreateGiteaResponse(httpResponse, HttpStatusCode.Created);
 
             return giteResponse;
         }
@@ -73,7 +73,7 @@ namespace RepoCleanup.Services
             return giteaResponse;
         }
 
-        public async Task<GiteaResponse> CreateRepo(CreateRepoOption createRepoOption) 
+        public async Task<GiteaResponse> CreateRepo(CreateRepoOption createRepoOption)
         {
             HttpContent content = new StringContent(JsonSerializer.Serialize(createRepoOption, Globals.SerializerOptions), Encoding.UTF8, "application/json");
             HttpResponseMessage httpResponse = await Globals.Client.PostAsync($"user/repos/", content);
@@ -105,7 +105,7 @@ namespace RepoCleanup.Services
         public async Task<GiteaResponse> DeleteRepository(string org, string repoName)
         {
             HttpResponseMessage httpResponse = await Globals.Client.DeleteAsync($"repos/{org}/{repoName}");
-            
+
             GiteaResponse giteaResponse = await CreateGiteaResponse(httpResponse, HttpStatusCode.NoContent);
 
             return giteaResponse;
@@ -116,7 +116,7 @@ namespace RepoCleanup.Services
             var teamResponse = await GetTeamFromRepo(org, repoName, teamName);
 
             GiteaResponse giteaResponse = new GiteaResponse();
-            if(teamResponse.StatusCode ==  System.Net.HttpStatusCode.NotFound)
+            if (teamResponse.StatusCode == HttpStatusCode.NotFound)
             {
                 HttpContent httpContent = new StringContent("", Encoding.UTF8, "application/json");
                 HttpResponseMessage httpResponse = await Globals.Client.PutAsync($"repos/{org}/{repoName}/teams/{teamName}", httpContent);
@@ -126,14 +126,14 @@ namespace RepoCleanup.Services
             }
             else
             {
-                giteaResponse.Success = false;                
+                giteaResponse.Success = false;
             }
 
             return giteaResponse;
         }
 
         public async Task<GiteaResponse> GetTeamFromRepo(string org, string repoName, string teamName)
-        {            
+        {
             HttpResponseMessage httpResponse = await Globals.Client.GetAsync($"repos/{org}/{repoName}/teams/{teamName}");
 
             GiteaResponse giteaResponse = await CreateGiteaResponse(httpResponse, HttpStatusCode.OK);
@@ -141,7 +141,7 @@ namespace RepoCleanup.Services
             return giteaResponse;
         }
 
-        private static async Task<GiteaResponse> CreateGiteaResponse(HttpResponseMessage httpResponse, HttpStatusCode httpStatusForSuccess )
+        private static async Task<GiteaResponse> CreateGiteaResponse(HttpResponseMessage httpResponse, HttpStatusCode httpStatusForSuccess)
         {
             GiteaResponse giteaResponse = new GiteaResponse();
             giteaResponse.Success = false;
