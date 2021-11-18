@@ -3,6 +3,7 @@ using RepoCleanup.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace RepoCleanup.Functions
@@ -69,6 +70,80 @@ namespace RepoCleanup.Functions
         public static bool ShouldThisApplyToAllOrgs()
         {
             return YesNo("Should this apply to all organisations?");
+        }
+
+        public static Organisation CollectNewOrgInfo()
+        {
+            var shortName = CollectShortNameForOrg();
+            var fullname = CollectFullNameForOrg();
+            var website = CollectWebSiteForOrg();
+
+            var org = new Organisation
+            {
+                Username = shortName,
+                Fullname = fullname,
+                Website = website,
+                Visibility = "public",
+                RepoAdminChangeTeamAccess = false
+            };
+
+            return org;
+        }
+
+        private static string CollectWebSiteForOrg()
+        {
+            var isValid = false;
+            var website = string.Empty;
+
+            while (!isValid)
+            {
+                Console.Write("\r\nSet website for org: ");
+                website = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(website))
+                {
+                    isValid = true;
+                }
+                else
+                {
+                    isValid = Regex.IsMatch(website, "^[a-zA-Z0-9\\-._/:]*$");
+                }
+                if (!isValid)
+                {
+                    Console.WriteLine("Invalid website adress. Letters a-z and characters:'-', '_', '.', '/', ':' are permitted.");
+                }
+            }
+
+            return website;
+        }
+
+        private static string CollectFullNameForOrg()
+        {
+            return CollectInput("\r\nSet fullname for org: ");
+        }
+
+        private static string CollectShortNameForOrg()
+        {
+            var isValid = false;
+            var shortName = string.Empty;
+            while (!isValid)
+            {
+                Console.Write("\r\nSet shortname for org: ");
+                shortName = Console.ReadLine().ToLower();
+
+                isValid = IsValidOrgShortName(shortName);
+                if (!isValid)
+                {
+                    Console.WriteLine("Invalid name. Letters a-z and character '-' are permitted. Username must start with a letter and end with a letter or number.");
+                }
+            }
+
+            return shortName;
+        }
+
+        private static bool IsValidOrgShortName(string shortName)
+        {
+            return Regex.IsMatch(shortName, "^[a-z]+[a-z0-9\\-]+[a-z0-9]$");
         }
 
         public static void ConfirmWithExit(string confirmMessage, string exitMessage)

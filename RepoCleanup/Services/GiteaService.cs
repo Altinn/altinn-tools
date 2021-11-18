@@ -53,7 +53,7 @@ namespace RepoCleanup.Services
             return JsonSerializer.Deserialize<List<Team>>(json);
         }        
 
-        public static async Task<GiteaResponse> CreateTeam(string org, CreateTeamOption teamOption)
+        public async Task<GiteaResponse> CreateTeam(string org, CreateTeamOption teamOption)
         {
             HttpContent content = new StringContent(JsonSerializer.Serialize(teamOption, Globals.SerializerOptions), Encoding.UTF8, "application/json");
             HttpResponseMessage httpResponse = await Globals.Client.PostAsync($"orgs/{org}/teams", content);
@@ -63,7 +63,7 @@ namespace RepoCleanup.Services
             return giteResponse;
         }
 
-        public static async Task<GiteaResponse> CreateOrg(Organisation organisation)
+        public async Task<GiteaResponse> CreateOrg(Organisation organisation)
         {
             HttpContent content = new StringContent(JsonSerializer.Serialize(organisation, Globals.SerializerOptions), Encoding.UTF8, "application/json");
             HttpResponseMessage httpResponse = await Globals.Client.PostAsync($"orgs", content);

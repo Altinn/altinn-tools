@@ -29,7 +29,8 @@ namespace RepoCleanup
             Console.WriteLine("6) Add existing team to repository for organisation(s)");
             Console.WriteLine("7) Migrate Altinn II XSD Schema for organisation(s)");
             Console.WriteLine("8) Delete repository for organisation(s)");
-            Console.WriteLine("9) Exit");
+            Console.WriteLine("9) Setup a new service owner in Gitea with all teams and default repository");
+            Console.WriteLine("0) Exit");
             Console.Write("\r\nSelect an option: ");
 
             switch (Console.ReadLine())
@@ -59,6 +60,9 @@ namespace RepoCleanup
                     await DeleteDatamodelsRepoFunction.Run();
                     return;
                 case "9":
+                    await SetupNewServiceOwnerFunction.Run();
+                    return;
+                case "0":
                 default:
                     return;
             }

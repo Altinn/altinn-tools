@@ -149,7 +149,7 @@ namespace RepoCleanup.Functions
         {
             bool createdOrg = false;
             Console.WriteLine($"Creating org {org.Fullname} ({org.Username}). Please wait.");
-            GiteaResponse response = await GiteaService.CreateOrg(org);
+            GiteaResponse response = await new GiteaService().CreateOrg(org);
 
             if (response.Success)
             {
@@ -186,7 +186,7 @@ namespace RepoCleanup.Functions
             Console.WriteLine("Creating teams for org. Please wait.");
             foreach (CreateTeamOption team in teams)
             {
-                GiteaResponse response = await GiteaService.CreateTeam(org.Username, team);
+                GiteaResponse response = await new GiteaService().CreateTeam(org.Username, team);
 
                 if (response.Success)
                 {
