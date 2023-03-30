@@ -1,11 +1,11 @@
 # Platform restore tool: Altinn ReStorage
 
 ## Prereqisites
-In order to use this tool simply clone the repository to your local machine. 
-Add appsettings.json and run the application. 
+In order to use this tool simply clone the repository to your local machine.
+Add appsettings.json and run the application.
 
-appsettings.json contains configuration for the various storage accounts and cosmos db. 
-An updated version of this file is available on [AltinnPedia](https://altinnpedia.ai-dev.brreg.no/ops/backup-recovery/altinn_restorage/) (requires authentication).
+appsettings.json contains configuration for the various storage accounts and cosmos db.
+An updated version of this file is available on [AltinnPedia](https://pedia.altinn.cloud/altinn-3/ops/backup-recovery/altinn_restorage/) (requires authentication).
 
 ## Root command: settings
 

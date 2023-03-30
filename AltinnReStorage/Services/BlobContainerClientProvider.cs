@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+
 using AltinnReStorage.Configuration;
+
+using Azure.ResourceManager;
+using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
 using Azure.Storage;
 using Azure.Storage.Blobs;
+
 using Microsoft.Extensions.Options;
 
 namespace AltinnReStorage.Services
@@ -45,10 +49,19 @@ namespace AltinnReStorage.Services
 
                 if (string.IsNullOrEmpty(config.AccountKey))
                 {
-                    StorageManagementClient storageManagementClient = new StorageManagementClient(config.SubscriptionId, _accessTokenService.GetCredential());
-                    StorageAccountListKeysResult res = await storageManagementClient.StorageAccounts.ListKeysAsync(config.ResourceGroup, config.AccountName);
-                    config.AccountKey = res.Keys.Where(k => k.KeyName == "key1").FirstOrDefault().Value;
-                    _accountConfig[key].AccountKey = config.AccountKey;
+                    ArmClient armClient = new (_accessTokenService.GetCredential());
+                    SubscriptionResource subscription = armClient.GetSubscriptionResource(new Azure.Core.ResourceIdentifier(config.SubscriptionId));
+                    ResourceGroupResource resourceGroup = subscription.GetResourceGroup(config.ResourceGroup);
+                    StorageAccountResource storageAccount = await resourceGroup.GetStorageAccountAsync(config.AccountName);
+                    await foreach (StorageAccountKey accountKey in storageAccount.GetKeysAsync())
+                    {
+                        if (accountKey.KeyName == "key1")
+                        {
+                            config.AccountKey = accountKey.Value;
+                            _accountConfig[key].AccountKey = config.AccountKey;
+                            break;
+                        }
+                    }
                 }
 
                 string blobEndpoint = $"https://{config.AccountName}.blob.core.windows.net/";
@@ -60,7 +73,7 @@ namespace AltinnReStorage.Services
             }
             catch (Exception e)
             {
-                throw new Exception("An error occured when setting ut blob storage client. Please check your credentials and try again.", e);
+                throw new Exception("An error occured when setting up blob storage client. Please check your credentials and try again.", e);
             }
 
             return client;
