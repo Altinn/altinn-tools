@@ -17,7 +17,7 @@ namespace AltinnReStorage.Commands.Settings
     {
         private readonly IAccessTokenService _accessTokenService;
         private readonly IBlobContainerClientProvider _blobContainerClientProvider;
-        private readonly IDocumentClientProvider _documentClientProvider;
+        private readonly ICosmosClientProvider _cosmosClientProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Logout"/> class.
@@ -25,11 +25,11 @@ namespace AltinnReStorage.Commands.Settings
         public Logout(
             IAccessTokenService accessTokenService,
             IBlobContainerClientProvider blobContainerClientProvider,
-            IDocumentClientProvider documentClientProvider)
+            ICosmosClientProvider cosmosClientProvider)
         {
             _accessTokenService = accessTokenService;
             _blobContainerClientProvider = blobContainerClientProvider;
-            _documentClientProvider = documentClientProvider;
+            _cosmosClientProvider = cosmosClientProvider;
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace AltinnReStorage.Commands.Settings
         {
             _accessTokenService.InvalidateCredentials();
             _blobContainerClientProvider.RemoveBlobClients();
-            _documentClientProvider.RemoveDocumentClients();
+            _cosmosClientProvider.RemoveCosmosClients();
 
             Console.WriteLine("All credentials and clients successfully removed.");
             return Task.CompletedTask;

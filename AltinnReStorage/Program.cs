@@ -103,7 +103,7 @@ namespace AltinnReStorage
 
             services.AddSingleton<IAccessTokenService, AccessTokenService>();
             services.AddSingleton<IBlobContainerClientProvider, BlobContainerClientProvider>();
-            services.AddSingleton<IDocumentClientProvider, DocumentClientProvider>();
+            services.AddSingleton<ICosmosClientProvider, CosmosClientProvider>();
 
             services.Configure<GeneralSettings>(_configuration.GetSection("GeneralSettings"));
             services.Configure<AzureStorageConfiguration>(_configuration.GetSection("AzureStorageConfiguration"));

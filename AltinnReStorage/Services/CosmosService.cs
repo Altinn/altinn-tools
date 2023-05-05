@@ -5,28 +5,26 @@ using System.Net;
 using System.Threading.Tasks;
 
 using Altinn.Platform.Storage.Interface.Models;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Client;
-using Microsoft.Azure.Documents.Linq;
+
+using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
 
 namespace AltinnReStorage.Services
 {
     /// <inheritdoc/>
     public class CosmosService : ICosmosService
     {
-        private readonly IDocumentClientProvider _clientProvider;
-        private readonly Uri _instanceCollectionUri;
-        private readonly Uri _dataCollectionUri;
+        private readonly ICosmosClientProvider _clientProvider;
+        private readonly string _databaseId = "Storage";
+        private readonly string _dataCollectionId = "dataElements";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CosmosService"/> class.
         /// </summary>
         /// <param name="clientProvider">The document client provider.</param>
-        public CosmosService(IDocumentClientProvider clientProvider)
+        public CosmosService(ICosmosClientProvider clientProvider)
         {
             _clientProvider = clientProvider;
-            _instanceCollectionUri = UriFactory.CreateDocumentCollectionUri("Storage", "instances");
-            _dataCollectionUri = UriFactory.CreateDocumentCollectionUri("Storage", "dataElements");
         }
 
         /// <summary>
@@ -39,34 +37,34 @@ namespace AltinnReStorage.Services
         {
             DataElement dataElement = null;
 
-            Uri uri = UriFactory.CreateDocumentUri("Storage", "dataElements", dataGuid);
-            DocumentClient client = await _clientProvider.GetDocumentClient(Program.Environment);
+            CosmosClient client = await _clientProvider.GetCosmosClient(Program.Environment);
 
             if (client == null)
             {
                 throw new Exception("Unable to create document client. Please check your login credentials.");
             }
 
-            FeedOptions options;
+            Container container = client.GetContainer(_databaseId, _dataCollectionId);
+
+            QueryRequestOptions options = new()
+            {
+                MaxBufferedItemCount = 0,
+                MaxConcurrency = -1,
+                MaxItemCount = 1000
+            };
 
             if (!string.IsNullOrEmpty(instanceGuid))
             {
-                options = new FeedOptions { PartitionKey = new PartitionKey(instanceGuid) };
-            }
-            else
-            {
-                options = new FeedOptions { EnableCrossPartitionQuery = true };
+                options.PartitionKey = new PartitionKey(instanceGuid);
             }
 
-            IDocumentQuery<DataElement> query = client
-                .CreateDocumentQuery<DataElement>(_dataCollectionUri, options)
-                .Where(i => i.Id == dataGuid)
-                .AsDocumentQuery();
+            FeedIterator<DataElement> query = container.GetItemLinqQueryable<DataElement>(requestOptions: options)
+                    .ToFeedIterator();
 
-            FeedResponse<DataElement> result = await query.ExecuteNextAsync<DataElement>();
-            if (result.Count > 0)
+            while (query.HasMoreResults)
             {
-                dataElement = result.First();
+                FeedResponse<DataElement> response = await query.ReadNextAsync();
+                dataElement = response.First();
             }
 
             return dataElement;
@@ -75,49 +73,50 @@ namespace AltinnReStorage.Services
         /// <inheritdoc/>
         public async Task<List<string>> ListDataElements(string instanceGuid)
         {
-            List<string> dataGuids = new List<string>();
-            string continuationToken = null;
-
-            DocumentClient client = await _clientProvider.GetDocumentClient(Program.Environment);
+            CosmosClient client = await _clientProvider.GetCosmosClient(Program.Environment);
 
             if (client == null)
             {
                 throw new Exception("Unable to create document client. Please check your login credentials.");
             }
 
-            do
+            List<string> dataElementIds = new();
+            Container container = client.GetContainer(_databaseId, _dataCollectionId);
+            QueryRequestOptions options = new()
             {
-                var feed = await client.ReadDocumentFeedAsync(
-                    _dataCollectionUri,
-                    new FeedOptions
-                    {
-                        PartitionKey = new PartitionKey(instanceGuid),
-                        RequestContinuation = continuationToken
-                    });
+                MaxBufferedItemCount = 0,
+                MaxConcurrency = -1,
+                PartitionKey = new(instanceGuid),
+                MaxItemCount = 1000
+            };
 
-                continuationToken = feed.ResponseContinuation;
+            FeedIterator<DataElement> query = container.GetItemLinqQueryable<DataElement>(requestOptions: options)
+                    .ToFeedIterator();
 
-                foreach (Document document in feed)
-                {
-                    dataGuids.Add(document.Id);
-                }
+            while (query.HasMoreResults)
+            {
+                FeedResponse<DataElement> response = await query.ReadNextAsync();
+                dataElementIds.AddRange(response.Select(d => d.Id));
             }
-            while (continuationToken != null);
 
-            return dataGuids;
+            return dataElementIds;
         }
 
         /// <inheritdoc/>
         public async Task<bool> SaveDataElement(DataElement dataElement)
         {
-            DocumentClient client = await _clientProvider.GetDocumentClient(Program.Environment);
+            CosmosClient client = await _clientProvider.GetCosmosClient(Program.Environment);
+
             if (client == null)
             {
                 throw new Exception("Unable to create document client. Please check your login credentials.");
             }
 
-            ResourceResponse<Document> createDocumentResponse = await client.CreateDocumentAsync(_dataCollectionUri, dataElement);
-            HttpStatusCode res = createDocumentResponse.StatusCode;
+            Container container = client.GetContainer(_databaseId, _dataCollectionId);
+
+            ItemResponse<DataElement> createdDataElement = await container.CreateItemAsync(dataElement, new PartitionKey(dataElement.InstanceGuid));
+
+            HttpStatusCode res = createdDataElement.StatusCode;
 
             return res == HttpStatusCode.Created;
         }
@@ -125,15 +124,16 @@ namespace AltinnReStorage.Services
         /// <inheritdoc/>
         public async Task<bool> ReplaceDataElement(DataElement dataElement)
         {
-            DocumentClient client = await _clientProvider.GetDocumentClient(Program.Environment);
+            CosmosClient client = await _clientProvider.GetCosmosClient(Program.Environment);
             if (client == null)
             {
                 throw new Exception("Unable to create document client. Please check your login credentials.");
             }
 
-            ResourceResponse<Document> createDocumentResponse = await client.ReplaceDocumentAsync($"{_dataCollectionUri}/docs/{dataElement.Id}", dataElement);
-            HttpStatusCode res = createDocumentResponse.StatusCode;
-            return res == HttpStatusCode.OK;
+            Container container = client.GetContainer(_databaseId, _dataCollectionId);
+
+            ItemResponse<DataElement> res = await container.UpsertItemAsync(dataElement, new PartitionKey(dataElement.Id));
+            return res.StatusCode == HttpStatusCode.OK;
         }
     }
 }

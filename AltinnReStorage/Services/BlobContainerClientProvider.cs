@@ -49,7 +49,7 @@ namespace AltinnReStorage.Services
 
                 if (string.IsNullOrEmpty(config.AccountKey))
                 {
-                    ArmClient armClient = new (_accessTokenService.GetCredential());
+                    ArmClient armClient = new(_accessTokenService.GetCredential());
                     SubscriptionResource subscription = armClient.GetSubscriptionResource(new Azure.Core.ResourceIdentifier(config.SubscriptionId));
                     ResourceGroupResource resourceGroup = subscription.GetResourceGroup(config.ResourceGroup);
                     StorageAccountResource storageAccount = await resourceGroup.GetStorageAccountAsync(config.AccountName);
