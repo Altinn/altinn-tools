@@ -323,14 +323,17 @@ namespace CosmosToPostgreSQL
         private static async Task InsertInstance(CosmosInstance instance, int id)
         {
             instance.Data = null;
-            await using NpgsqlCommand pgcomInsert = _dataSource.CreateCommand("INSERT INTO storage.instances(id, partyId, alternateId, instance, created, lastChanged)" +
-                " OVERRIDING SYSTEM VALUE VALUES ($6, $1, $2, jsonb_strip_nulls($3), $4, $5) ON CONFLICT(id) DO UPDATE SET instance = jsonb_strip_nulls($3), lastChanged = $5");
+            await using NpgsqlCommand pgcomInsert = _dataSource.CreateCommand("INSERT INTO storage.instances(id, partyId, alternateId, instance, created, lastChanged, org, appId, taskId)" +
+                " OVERRIDING SYSTEM VALUE VALUES ($6, $1, $2, jsonb_strip_nulls($3), $4, $5, $7, $8, $9) ON CONFLICT(id) DO UPDATE SET instance = jsonb_strip_nulls($3), lastChanged = $5, taskId = $9");
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Bigint, long.Parse(instance.InstanceOwner.PartyId));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(instance.Id));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Jsonb, instance);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, instance.Created ?? DateTime.Now);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, instance.LastChanged ?? DateTime.Now);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Bigint, id);
+            pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance.Org);
+            pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance.AppId);
+            pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance?.Process?.CurrentTask?.ElementId ?? (object)DBNull.Value);
 
             try
             {
@@ -341,10 +344,11 @@ namespace CosmosToPostgreSQL
                 if (ex.MessageText.StartsWith("duplicate key value violates unique constraint"))
                 {
                     // Instance updated after first iteration of convertion program
-                    await using NpgsqlCommand pgcomUpdate = _dataSource.CreateCommand("UPDATE storage.instances set lastChanged = $3, instance= jsonb_strip_nulls($2) WHERE alternateId = $1");
+                    await using NpgsqlCommand pgcomUpdate = _dataSource.CreateCommand("UPDATE storage.instances set lastChanged = $3, taskId = $4, instance= jsonb_strip_nulls($2) WHERE alternateId = $1");
                     pgcomUpdate.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(instance.Id));
                     pgcomUpdate.Parameters.AddWithValue(NpgsqlDbType.Jsonb, instance);
                     pgcomUpdate.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, instance.LastChanged ?? DateTime.Now);
+                    pgcomUpdate.Parameters.AddWithValue(NpgsqlDbType.Text, instance?.Process?.CurrentTask?.ElementId ?? (object)DBNull.Value);
 
                     await pgcomUpdate.ExecuteNonQueryAsync();
                 }
