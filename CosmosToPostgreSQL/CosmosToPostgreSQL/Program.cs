@@ -36,10 +36,6 @@ namespace CosmosToPostgreSQL
         private static int _processedTotalApplication = 0;
         private static int _processedTotalText = 0;
 
-        private static int _nextIdInstance = 0;
-        private static int _nextIdInstanceEvent = 0;
-        private static int _nextIdDataelement = 0;
-
         public static async Task Main()
         {
             var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: false);
@@ -148,7 +144,6 @@ namespace CosmosToPostgreSQL
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
             LogStart("Instance");
-            _nextIdInstance = await GetAndSetNextId("instances");
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 1000 };
             FeedIterator<CosmosInstance> query = _instanceContainer.GetItemLinqQueryable<CosmosInstance>(requestOptions: options)
                 .Where(i => i.Ts >= _resumeTimeInstance - 1)
@@ -163,7 +158,7 @@ namespace CosmosToPostgreSQL
                 List<Task> tasks = new();
                 foreach (CosmosInstance instance in await query.ReadNextAsync())
                 {
-                    tasks.Add(InsertInstance(instance, _nextIdInstance++));
+                    tasks.Add(InsertInstance(instance));
                     timestamp = instance.Ts;
                     _processedTotalInstance++;
                     processedInIteration++;
@@ -182,7 +177,6 @@ namespace CosmosToPostgreSQL
                 }
             }
 
-            _nextIdInstance = await GetAndSetNextId("instances");
             LogEnd("Instance", _processedTotalInstance, stopwatch.ElapsedMilliseconds/1000, timestamp);
         }
 
@@ -190,7 +184,6 @@ namespace CosmosToPostgreSQL
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
             LogStart("Dataelement");
-            _nextIdInstance = await GetAndSetNextId("dataelements");
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 1000 };
             FeedIterator<CosmosDataElement> query = _dataElementContainer.GetItemLinqQueryable<CosmosDataElement>(requestOptions: options)
                 .Where(d => d.Ts >= _resumeTimeDataElement - 1)
@@ -217,7 +210,8 @@ namespace CosmosToPostgreSQL
                         else if (fileScanResultString.IndexOf("NotApplicable", StringComparison.OrdinalIgnoreCase) != -1)
                             dataElement.FileScanResult = "NotApplicable";
                     }
-                    tasks.Add(InsertDataElement(dataElement, _nextIdDataelement++));
+
+                    tasks.Add(InsertDataElement(dataElement));
                     timestamp = dataElement.Ts;
                     _processedTotalDataelement++;
                     processedInIteration++;
@@ -236,15 +230,13 @@ namespace CosmosToPostgreSQL
                 }
             }
 
-            _nextIdInstance = await GetAndSetNextId("dataelements");
             LogEnd("Dataelement", _processedTotalDataelement, stopwatch.ElapsedMilliseconds / 1000, timestamp);
         }
 
         private static async Task ProcessInstanceEvents()
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            LogStart("Dataelement");
-            _nextIdInstanceEvent = await GetAndSetNextId("InstanceEvents");
+            LogStart("InstanceEvents");
 
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 1000 };
             FeedIterator<CosmosInstanceEvent> query = _instanceEventContainer.GetItemLinqQueryable<CosmosInstanceEvent>(requestOptions: options)
@@ -260,7 +252,7 @@ namespace CosmosToPostgreSQL
                 List<Task> tasks = new();
                 foreach (CosmosInstanceEvent instanceEvent in await query.ReadNextAsync())
                 {
-                    tasks.Add(InsertInstanceEvent(instanceEvent, _nextIdInstanceEvent++));
+                    tasks.Add(InsertInstanceEvent(instanceEvent));
                     timestamp = instanceEvent.Ts;
                     _processedTotalInstanceEvent++;
                     processedInIteration++;
@@ -279,7 +271,6 @@ namespace CosmosToPostgreSQL
                 }
             }
 
-            await GetAndSetNextId("InstanceEvents");
             LogEnd("InstanceEvent", _processedTotalInstanceEvent, stopwatch.ElapsedMilliseconds / 1000, timestamp);
         }
 
@@ -320,17 +311,16 @@ namespace CosmosToPostgreSQL
             await pgcom.ExecuteNonQueryAsync();
         }
 
-        private static async Task InsertInstance(CosmosInstance instance, int id)
+        private static async Task InsertInstance(CosmosInstance instance)
         {
             instance.Data = null;
-            await using NpgsqlCommand pgcomInsert = _dataSource.CreateCommand("INSERT INTO storage.instances(id, partyId, alternateId, instance, created, lastChanged, org, appId, taskId)" +
-                " OVERRIDING SYSTEM VALUE VALUES ($6, $1, $2, jsonb_strip_nulls($3), $4, $5, $7, $8, $9) ON CONFLICT(id) DO UPDATE SET instance = jsonb_strip_nulls($3), lastChanged = $5, taskId = $9");
+            await using NpgsqlCommand pgcomInsert = _dataSource.CreateCommand("INSERT INTO storage.instances(partyId, alternateId, instance, created, lastChanged, org, appId, taskId)" +
+                " VALUES ($1, $2, jsonb_strip_nulls($3), $4, $5, $6, $7, $8) ON CONFLICT(id) DO UPDATE SET instance = jsonb_strip_nulls($3), lastChanged = $5, taskId = $8");
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Bigint, long.Parse(instance.InstanceOwner.PartyId));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(instance.Id));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Jsonb, instance);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, instance.Created ?? DateTime.Now);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, instance.LastChanged ?? DateTime.Now);
-            pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Bigint, id);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance.Org);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance.AppId);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance?.Process?.CurrentTask?.ElementId ?? (object)DBNull.Value);
@@ -359,15 +349,14 @@ namespace CosmosToPostgreSQL
             }
         }
 
-        private static async Task InsertDataElement(CosmosDataElement element, int id)
+        private static async Task InsertDataElement(CosmosDataElement element)
         {
-            await using NpgsqlCommand pgcomInsert = _dataSource.CreateCommand("INSERT INTO storage.dataelements(id, instanceInternalId, instanceGuid, alternateId, element)" +
-                " OVERRIDING SYSTEM VALUE VALUES ($5, $1, $2, $3, jsonb_strip_nulls($4)) ON CONFLICT(id) DO UPDATE SET element = jsonb_strip_nulls($4)");
+            await using NpgsqlCommand pgcomInsert = _dataSource.CreateCommand("INSERT INTO storage.dataelements(instanceInternalId, instanceGuid, alternateId, element)" +
+                " VALUES ($1, $2, $3, jsonb_strip_nulls($4)) ON CONFLICT(id) DO UPDATE SET element = jsonb_strip_nulls($4)");
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Bigint, await GetInstanceId(element.InstanceGuid));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(element.InstanceGuid));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(element.Id));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Jsonb, element);
-            pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Bigint, id);
 
             try
             {
@@ -391,14 +380,13 @@ namespace CosmosToPostgreSQL
             }
         }
 
-        private static async Task InsertInstanceEvent(CosmosInstanceEvent instanceEvent, int id)
+        private static async Task InsertInstanceEvent(CosmosInstanceEvent instanceEvent)
         {
-            await using NpgsqlCommand pgcom = _dataSource.CreateCommand("INSERT INTO storage.instanceEvents(id, instance, alternateId, event)" +
-                " OVERRIDING SYSTEM VALUE VALUES ($4, $1, $2, jsonb_strip_nulls($3))");
+            await using NpgsqlCommand pgcom = _dataSource.CreateCommand("INSERT INTO storage.instanceEvents(instance, alternateId, event)" +
+                " VALUES ($1, $2, jsonb_strip_nulls($3))");
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(instanceEvent.InstanceId.Split('/').Last()));
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Uuid, instanceEvent.Id);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Jsonb, instanceEvent);
-            pgcom.Parameters.AddWithValue(NpgsqlDbType.Bigint, id);
 
             try
             {
@@ -497,35 +485,6 @@ namespace CosmosToPostgreSQL
             await using NpgsqlCommand pgcom = _dataSource.CreateCommand($"UPDATE storage.convertionStatus SET {stateRef} = $1");
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Bigint, timestamp);
             await pgcom.ExecuteNonQueryAsync();
-        }
-
-        private static async Task<int> GetCurrentId(string table)
-        {
-            await using NpgsqlCommand pgcom = _dataSource.CreateCommand("SELECT currval(pg_get_serial_sequence($1, 'id'))");
-            pgcom.Parameters.AddWithValue(NpgsqlDbType.Text, table);
-            await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
-            {
-                return reader.GetFieldValue<int>(0);
-            }
-            else
-            {
-                throw new Exception("Error getting next id from " + table);
-            }
-        }
-
-        private static async Task<int> GetAndSetNextId(string table)
-        {
-            await using NpgsqlCommand pgcom = _dataSource.CreateCommand($"SELECT pg_catalog.setval(pg_get_serial_sequence('storage.{table}', 'id'), coalesce(max(id),0) + 1, false) FROM storage.{table}");
-            await using NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
-            {
-                return reader.GetFieldValue<int>(0);
-            }
-            else
-            {
-                throw new Exception("Error setting next id from " + table);
-            }
         }
 
         private static void LogStart(string table)
