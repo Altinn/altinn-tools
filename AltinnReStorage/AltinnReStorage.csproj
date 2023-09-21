@@ -11,12 +11,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Altinn.Platform.Storage.Interface" Version="3.23.0" />
-		<PackageReference Include="Azure.Identity" Version="1.10.0" />
+		<PackageReference Include="Altinn.Platform.Storage.Interface" Version="3.24.0" />
+		<PackageReference Include="Azure.Identity" Version="1.10.1" />
 		<PackageReference Include="Azure.ResourceManager.Storage" Version="1.1.1" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.17.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.18.0" />
 		<PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.1.0" />
-		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.35.3" />
+		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.35.4" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
