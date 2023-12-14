@@ -17,6 +17,7 @@ namespace CosmosToPostgreSQL
         private static string _pgConnectionString;
 
         const string _logFilename = nameof(Program) + ".log";
+        const string _errorFilename = nameof(Program) + "-errors.log";
 
         private static Container _instanceEventContainer;
         private static Container _instanceContainer;
@@ -35,6 +36,10 @@ namespace CosmosToPostgreSQL
         private static int _processedTotalInstanceEvent = 0;
         private static int _processedTotalApplication = 0;
         private static int _processedTotalText = 0;
+
+        private static int _errorsInstance = 0;
+        private static bool _abortOnError = false;
+        private static object _lockObject = new object();
 
         public static async Task Main()
         {
@@ -71,7 +76,7 @@ namespace CosmosToPostgreSQL
             LogStart("Text");
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 100 };
             FeedIterator<CosmosTextResource> query = _textContainer.GetItemLinqQueryable<CosmosTextResource>(requestOptions: options)
-                .Where(t => t.Ts >= _resumeTimeApplication - 1)
+                .Where(t => t.Ts >= _resumeTimeText - 1)
                 .OrderBy(t => t.Ts).ToFeedIterator();
 
             long startTime = DateTime.Now.Ticks;
@@ -286,7 +291,10 @@ namespace CosmosToPostgreSQL
             }
             else
             {
-                throw new ArgumentException("App not found for " + textResource.Id);
+                LogError("App not found for " + textResource.Id);
+                return;
+
+                //throw new ArgumentException("App not found for " + textResource.Id);
             }
 
             await using NpgsqlCommand pgcomRead = _dataSource.CreateCommand("insert into storage.texts (org, app, language, textResource, applicationInternalId) values ($1, $2, $3, jsonb_strip_nulls($4), $5)" +
@@ -351,9 +359,16 @@ namespace CosmosToPostgreSQL
 
         private static async Task InsertDataElement(CosmosDataElement element)
         {
+            long instanceId = await GetInstanceId(element.InstanceGuid, element.Id);
+            if (instanceId == 0)
+                return;
+
+            if (element.Filename != null && element.Filename.Contains("\0"))
+                element.Filename = element.Filename.Replace("\0", null);
+
             await using NpgsqlCommand pgcomInsert = _dataSource.CreateCommand("INSERT INTO storage.dataelements(instanceInternalId, instanceGuid, alternateId, element)" +
                 " VALUES ($1, $2, $3, jsonb_strip_nulls($4)) ON CONFLICT(id) DO UPDATE SET element = jsonb_strip_nulls($4)");
-            pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Bigint, await GetInstanceId(element.InstanceGuid));
+            pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Bigint,instanceId);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(element.InstanceGuid));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(element.Id));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Jsonb, element);
@@ -404,7 +419,7 @@ namespace CosmosToPostgreSQL
             }
         }
 
-        private static async Task<long> GetInstanceId(string id)
+        private static async Task<long> GetInstanceId(string id, string elementId)
         {
             long internalId = 0;
             await using NpgsqlCommand pgcom = _dataSource.CreateCommand($"select id from storage.instances where alternateId = $1");
@@ -419,7 +434,10 @@ namespace CosmosToPostgreSQL
 
             if (internalId == 0)
             {
-                throw new Exception("Could not find internal instance id for guid: " + id);
+                _errorsInstance++;
+                Console.WriteLine($"Could not find internal instance id for guid: {id}, data element id: {elementId}");
+                LogError($"Could not find internal instance id for guid: {id}, data element id: {elementId}");
+                //throw new Exception($"Could not find internal instance id for guid: {id}, data element id: {elementId}");
             }
 
             return internalId;
@@ -490,6 +508,13 @@ namespace CosmosToPostgreSQL
         private static void LogStart(string table)
         {
             File.AppendAllText(_logFilename, $"{DateTime.Now} Start processing {table}\r\n");
+        }
+
+        private static void LogError(string msg, Exception e = null)
+        {
+            Console.WriteLine($"{DateTime.Now} {msg} {e?.Message ?? null}");
+            lock (_lockObject)
+                File.AppendAllText(_errorFilename, $"{DateTime.Now} {msg} {e?.Message ?? null}\r\n");
         }
 
         private static void LogEnd(string table, int numberProcessed, long timeUsed, object timestamp)
