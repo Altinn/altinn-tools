@@ -300,7 +300,7 @@ namespace CosmosToPostgreSQL
             await using NpgsqlCommand pgcomRead = _dataSource.CreateCommand("insert into storage.texts (org, app, language, textResource, applicationInternalId) values ($1, $2, $3, jsonb_strip_nulls($4), $5)" +
                 " ON CONFLICT ON CONSTRAINT textAlternateId DO UPDATE SET textResource = jsonb_strip_nulls($4)");
             pgcomRead.Parameters.AddWithValue(NpgsqlDbType.Text, textResource.Org);
-            pgcomRead.Parameters.AddWithValue(NpgsqlDbType.Text, textResource.Id[(textResource.Org.Length + 1)..]);
+            pgcomRead.Parameters.AddWithValue(NpgsqlDbType.Text, textResource.Id[(textResource.Org.Length + 1)..^(textResource.Language.Length + 1)]);
             pgcomRead.Parameters.AddWithValue(NpgsqlDbType.Text, textResource.Language);
             pgcomRead.Parameters.AddWithValue(NpgsqlDbType.Jsonb, textResource);
             pgcomRead.Parameters.AddWithValue(NpgsqlDbType.Bigint, applicationInternalId);
