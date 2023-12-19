@@ -182,7 +182,7 @@ namespace CosmosToPostgreSQL
                 }
             }
 
-            LogEnd("Instance", _processedTotalInstance, stopwatch.ElapsedMilliseconds/1000, timestamp);
+            LogEnd("Instance", _processedTotalInstance, stopwatch.ElapsedMilliseconds / 1000, timestamp);
         }
 
         private static async Task ProcessDataelements()
@@ -229,7 +229,7 @@ namespace CosmosToPostgreSQL
                 long iterationElapsedMs = (now - iterationStartTime) / TimeSpan.TicksPerMillisecond;
                 if (iterationElapsedMs > 0 && totalElapsedMs > 0)
                 {
-                    Console.WriteLine($"{DateTime.Now} Element Rate current p/m: {GetRate(processedInIteration,iterationElapsedMs):N0}" +
+                    Console.WriteLine($"{DateTime.Now} Element Rate current p/m: {GetRate(processedInIteration, iterationElapsedMs):N0}" +
                         $" Rate total p/m: {GetRate(_processedTotalDataelement, totalElapsedMs):N0}," +
                         $" processed: {_processedTotalDataelement:N0}");
                 }
@@ -368,7 +368,7 @@ namespace CosmosToPostgreSQL
 
             await using NpgsqlCommand pgcomInsert = _dataSource.CreateCommand("INSERT INTO storage.dataelements(instanceInternalId, instanceGuid, alternateId, element)" +
                 " VALUES ($1, $2, $3, jsonb_strip_nulls($4)) ON CONFLICT(id) DO UPDATE SET element = jsonb_strip_nulls($4)");
-            pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Bigint,instanceId);
+            pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Bigint, instanceId);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(element.InstanceGuid));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(element.Id));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Jsonb, element);
@@ -531,7 +531,7 @@ namespace CosmosToPostgreSQL
                 $"instance event: {_processedTotalInstanceEvent:N0}\r\n");
         }
 
-        private static long GetRate (int count, long duration)
+        private static long GetRate(int count, long duration)
         {
             return (long)Math.Round(1000.0 * count / duration);
         }
