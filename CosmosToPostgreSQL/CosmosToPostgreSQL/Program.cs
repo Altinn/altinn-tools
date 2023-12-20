@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
+using Altinn.Platform.Storage.Interface.Models;
 
 namespace CosmosToPostgreSQL
 {
@@ -25,11 +26,11 @@ namespace CosmosToPostgreSQL
         private static Container _applicationContainer;
         private static Container _textContainer;
         private static NpgsqlDataSource _dataSource;
-        private static int _resumeTimeInstance = 0;
-        private static int _resumeTimeDataElement = 0;
-        private static int _resumeTimeInstanceEvent = 0;
-        private static int _resumeTimeApplication = 0;
-        private static int _resumeTimeText = 0;
+        private static long _resumeTimeInstance = 0;
+        private static long _resumeTimeDataElement = 0;
+        private static long _resumeTimeInstanceEvent = 0;
+        private static long _resumeTimeApplication = 0;
+        private static long _resumeTimeText = 0;
 
         private static int _processedTotalInstance = 0;
         private static int _processedTotalDataelement = 0;
@@ -40,6 +41,7 @@ namespace CosmosToPostgreSQL
         private static int _errorsInstance = 0;
         private static bool _abortOnError = false;
         private static object _lockObject = new object();
+        private static long _startTs = DateTimeOffset.Now.ToUnixTimeSeconds();
 
         public static async Task Main()
         {
@@ -55,6 +57,7 @@ namespace CosmosToPostgreSQL
             {
                 await CosmosInitAsync();
                 await PostgresInitAsync();
+                LogInit();
 
                 await ProcessApplications();
                 await ProcessTexts();
@@ -73,14 +76,14 @@ namespace CosmosToPostgreSQL
         private static async Task ProcessTexts()
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            LogStart("Text");
+            LogStartTable("Text", _resumeTimeText);
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 100 };
             FeedIterator<CosmosTextResource> query = _textContainer.GetItemLinqQueryable<CosmosTextResource>(requestOptions: options)
-                .Where(t => t.Ts >= _resumeTimeText - 1)
+                .Where(t => t.Ts >= _resumeTimeText - 1 && t.Ts < (_resumeTimeApplication <_startTs ? _startTs : _resumeTimeApplication))
                 .OrderBy(t => t.Ts).ToFeedIterator();
 
             long startTime = DateTime.Now.Ticks;
-            int timestamp = 0;
+            long timestamp = 0;
             while (query.HasMoreResults)
             {
                 long iterationStartTime = DateTime.Now.Ticks;
@@ -110,14 +113,14 @@ namespace CosmosToPostgreSQL
         private static async Task ProcessApplications()
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            LogStart("Application");
+            LogStartTable("Application", _resumeTimeApplication);
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 100 };
             FeedIterator<CosmosApplication> query = _applicationContainer.GetItemLinqQueryable<CosmosApplication>(requestOptions: options)
                 .Where(i => i.Ts >= _resumeTimeApplication - 1)
                 .OrderBy(e => e.Created).ToFeedIterator();
 
             long startTime = DateTime.Now.Ticks;
-            int timestamp = 0;
+            long timestamp = 0;
             while (query.HasMoreResults)
             {
                 long iterationStartTime = DateTime.Now.Ticks;
@@ -131,6 +134,7 @@ namespace CosmosToPostgreSQL
                 }
 
                 await UpdateState("applicationTs", timestamp);
+                _resumeTimeApplication = timestamp;
                 long now = DateTime.Now.Ticks;
                 long totalElapsedMs = (now - startTime) / TimeSpan.TicksPerMillisecond;
                 long iterationElapsedMs = (now - iterationStartTime) / TimeSpan.TicksPerMillisecond;
@@ -148,14 +152,14 @@ namespace CosmosToPostgreSQL
         private static async Task ProcessInstances()
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            LogStart("Instance");
+            LogStartTable("Instance", _resumeTimeInstance);
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 1000 };
             FeedIterator<CosmosInstance> query = _instanceContainer.GetItemLinqQueryable<CosmosInstance>(requestOptions: options)
                 .Where(i => i.Ts >= _resumeTimeInstance - 1)
                 .OrderBy(e => e.Created).ToFeedIterator();
 
             long startTime = DateTime.Now.Ticks;
-            int timestamp = 0;
+            long timestamp = 0;
             while (query.HasMoreResults)
             {
                 long iterationStartTime = DateTime.Now.Ticks;
@@ -171,6 +175,7 @@ namespace CosmosToPostgreSQL
                 await Task.WhenAll(tasks);
 
                 await UpdateState("instanceTs", timestamp);
+                _resumeTimeInstance = timestamp;
                 long now = DateTime.Now.Ticks;
                 long totalElapsedMs = (now - startTime) / TimeSpan.TicksPerMillisecond;
                 long iterationElapsedMs = (now - iterationStartTime) / TimeSpan.TicksPerMillisecond;
@@ -188,14 +193,14 @@ namespace CosmosToPostgreSQL
         private static async Task ProcessDataelements()
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            LogStart("Dataelement");
+            LogStartTable("Dataelement", _resumeTimeDataElement);
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 1000 };
             FeedIterator<CosmosDataElement> query = _dataElementContainer.GetItemLinqQueryable<CosmosDataElement>(requestOptions: options)
-                .Where(d => d.Ts >= _resumeTimeDataElement - 1)
+                .Where(d => d.Ts >= _resumeTimeDataElement - 1 && d.Ts < (_resumeTimeInstance < _startTs ? _startTs : _resumeTimeInstance))
                 .OrderBy(d => d.Created).ToFeedIterator();
 
             long startTime = DateTime.Now.Ticks;
-            int timestamp = 0;
+            long timestamp = 0;
             while (query.HasMoreResults)
             {
                 long iterationStartTime = DateTime.Now.Ticks;
@@ -241,7 +246,7 @@ namespace CosmosToPostgreSQL
         private static async Task ProcessInstanceEvents()
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            LogStart("InstanceEvents");
+            LogStartTable("InstanceEvents", _resumeTimeInstanceEvent);
 
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 1000 };
             FeedIterator<CosmosInstanceEvent> query = _instanceEventContainer.GetItemLinqQueryable<CosmosInstanceEvent>(requestOptions: options)
@@ -249,7 +254,7 @@ namespace CosmosToPostgreSQL
                 .OrderBy(e => e.Ts).ToFeedIterator(); //Created is missing in index, should have used created
 
             long startTime = DateTime.Now.Ticks;
-            int timestamp = 0;
+            long timestamp = 0;
             while (query.HasMoreResults)
             {
                 long iterationStartTime = DateTime.Now.Ticks;
@@ -282,9 +287,10 @@ namespace CosmosToPostgreSQL
         private static async Task InsertText(CosmosTextResource textResource)
         {
             int applicationInternalId;
-            string app = textResource.Id[..^(textResource.Language.Length + 1)];
-            await using NpgsqlCommand pgcomReadApp = _dataSource.CreateCommand("select id from storage.applications where alternateId = $1");
+            string app = textResource.Id[(textResource.Org.Length + 1)..^(textResource.Language.Length + 1)];
+            await using NpgsqlCommand pgcomReadApp = _dataSource.CreateCommand("select id from storage.applications where app = $1 and org = $2");
             pgcomReadApp.Parameters.AddWithValue(NpgsqlDbType.Text, app);
+            pgcomReadApp.Parameters.AddWithValue(NpgsqlDbType.Text, textResource.Org);
             await using NpgsqlDataReader reader = await pgcomReadApp.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
@@ -311,9 +317,10 @@ namespace CosmosToPostgreSQL
 
         private static async Task InsertApplication(CosmosApplication application)
         {
-            await using NpgsqlCommand pgcom = _dataSource.CreateCommand("insert into storage.applications (alternateId, org, application) values ($1, $2, jsonb_strip_nulls($3))" +
-                " ON CONFLICT(alternateId) DO UPDATE SET application = jsonb_strip_nulls($3)");
-            pgcom.Parameters.AddWithValue(NpgsqlDbType.Text, application.Id);
+            string app = application.Id[(application.Org.Length + 1)..];
+            await using NpgsqlCommand pgcom = _dataSource.CreateCommand("insert into storage.applications (app, org, application) values ($1, $2, jsonb_strip_nulls($3))" +
+                " ON CONFLICT ON CONSTRAINT app_org DO UPDATE SET application = jsonb_strip_nulls($3)");
+            pgcom.Parameters.AddWithValue(NpgsqlDbType.Text, app);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Text, application.Org);
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Jsonb, application);
 
@@ -485,11 +492,11 @@ namespace CosmosToPostgreSQL
                     await using NpgsqlDataReader reader = await pgcomRead.ExecuteReaderAsync();
                     if (await reader.ReadAsync())
                     {
-                        _resumeTimeInstance = reader.GetFieldValue<int>("instanceTs");
-                        _resumeTimeDataElement = reader.GetFieldValue<int>("dataElementTs");
-                        _resumeTimeInstanceEvent = reader.GetFieldValue<int>("instanceEventTs");
-                        _resumeTimeApplication = reader.GetFieldValue<int>("applicationTs");
-                        _resumeTimeText = reader.GetFieldValue<int>("textTs");
+                        _resumeTimeInstance = reader.GetFieldValue<long>("instanceTs");
+                        _resumeTimeDataElement = reader.GetFieldValue<long>("dataElementTs");
+                        _resumeTimeInstanceEvent = reader.GetFieldValue<long>("instanceEventTs");
+                        _resumeTimeApplication = reader.GetFieldValue<long>("applicationTs");
+                        _resumeTimeText = reader.GetFieldValue<long>("textTs");
                     }
                 }
             }
@@ -499,16 +506,22 @@ namespace CosmosToPostgreSQL
             }
         }
 
-        private static async Task UpdateState(string stateRef, int timestamp)
+        private static async Task UpdateState(string stateRef, long timestamp)
         {
             await using NpgsqlCommand pgcom = _dataSource.CreateCommand($"UPDATE storage.convertionStatus SET {stateRef} = $1");
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Bigint, timestamp);
             await pgcom.ExecuteNonQueryAsync();
         }
 
-        private static void LogStart(string table)
+        private static void LogStartTable(string table, long ts)
         {
-            File.AppendAllText(_logFilename, $"{DateTime.Now} Start processing {table}\r\n");
+            File.AppendAllText(_logFilename, $"{DateTime.Now} Start processing {table} at {ts}\r\n");
+        }
+
+        private static void LogInit()
+        {
+            File.AppendAllText(_logFilename, $"{DateTime.Now} Start processing at _ts {_startTs}," +
+                $" server {_pgConnectionString.Split(';')[0].Split('=')[1]}\r\n");
         }
 
         private static void LogError(string msg, Exception e = null)

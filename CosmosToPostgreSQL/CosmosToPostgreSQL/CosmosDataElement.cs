@@ -13,7 +13,7 @@ namespace CosmosToPostgreSQL
     {
         [JsonProperty(PropertyName = "_ts")]
         [JsonPropertyName("_ts")]
-        public int Ts { get; set; }
+        public long Ts { get; set; }
 
         [JsonProperty(PropertyName = "fileScanResult")]
         [JsonPropertyName("FileScanResult")]
