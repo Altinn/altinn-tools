@@ -318,6 +318,7 @@ namespace CosmosToPostgreSQL
         private static async Task InsertApplication(CosmosApplication application)
         {
             string app = application.Id[(application.Org.Length + 1)..];
+            application.Id = $"{application.Org}/{app}";
             await using NpgsqlCommand pgcom = _dataSource.CreateCommand("insert into storage.applications (app, org, application) values ($1, $2, jsonb_strip_nulls($3))" +
                 " ON CONFLICT ON CONSTRAINT app_org DO UPDATE SET application = jsonb_strip_nulls($3)");
             pgcom.Parameters.AddWithValue(NpgsqlDbType.Text, app);
@@ -367,7 +368,7 @@ namespace CosmosToPostgreSQL
 
         private static async Task InsertDataElement(CosmosDataElement element)
         {
-            long instanceId = await GetInstanceId(element.InstanceGuid, element.Id);
+            long instanceId = await GetInstanceId(element.InstanceGuid, element);
             if (instanceId == 0)
                 return;
 
@@ -427,7 +428,7 @@ namespace CosmosToPostgreSQL
             }
         }
 
-        private static async Task<long> GetInstanceId(string id, string elementId)
+        private static async Task<long> GetInstanceId(string id, DataElement element)
         {
             long internalId = 0;
             await using NpgsqlCommand pgcom = _dataSource.CreateCommand($"select id from storage.instances where alternateId = $1");
@@ -443,9 +444,11 @@ namespace CosmosToPostgreSQL
             if (internalId == 0)
             {
                 _errorsInstance++;
-                Console.WriteLine($"Could not find internal instance id for guid: {id}, data element id: {elementId}");
-                LogError($"Could not find internal instance id for guid: {id}, data element id: {elementId}");
-                //throw new Exception($"Could not find internal instance id for guid: {id}, data element id: {elementId}");
+                string msg = $"Could not find internal instance id for guid: {id}, data element id: {element.Id}, " +
+                    $"created {element.Created}, last changed {element.LastChanged}, blob {element.BlobStoragePath}";
+                Console.WriteLine(msg);
+                LogError(msg);
+                ////throw new Exception(msg);
             }
 
             return internalId;
