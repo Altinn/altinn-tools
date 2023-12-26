@@ -16,6 +16,7 @@ namespace CosmosToPostgreSQL
         private static string _cosmosUrl;
         private static string _cosmosSecret;
         private static string _pgConnectionString;
+        private static string _environment;
 
         const string _logFilename = nameof(Program) + ".log";
         const string _errorFilename = nameof(Program) + "-errors.log";
@@ -43,6 +44,10 @@ namespace CosmosToPostgreSQL
         private static object _lockObject = new object();
         private static long _startTs = DateTimeOffset.Now.ToUnixTimeSeconds();
 
+        private static SortedSet<string> _dataelementWhitelist = new();
+        private static SortedSet<string> _textWhitelist = new();
+        private static readonly Dictionary<string, long> _instancesUpdatedAfterStart = new();
+
         public static async Task Main()
         {
             var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: false);
@@ -52,12 +57,14 @@ namespace CosmosToPostgreSQL
             _cosmosUrl = config["cosmosUrl"];
             _cosmosSecret = config["cosmosSecret"];
             _pgConnectionString = config["pgConnectionString"];
+            _environment = config["environment"];
 
             try
             {
                 await CosmosInitAsync();
                 await PostgresInitAsync();
                 LogInit();
+                ReadWhitelists();
 
                 await ProcessApplications();
                 await ProcessTexts();
@@ -79,7 +86,7 @@ namespace CosmosToPostgreSQL
             LogStartTable("Text", _resumeTimeText);
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 100 };
             FeedIterator<CosmosTextResource> query = _textContainer.GetItemLinqQueryable<CosmosTextResource>(requestOptions: options)
-                .Where(t => t.Ts >= _resumeTimeText - 1 && t.Ts < (_resumeTimeApplication <_startTs ? _startTs : _resumeTimeApplication))
+                .Where(t => t.Ts >= _resumeTimeText - 1 && t.Ts < _startTs)
                 .OrderBy(t => t.Ts).ToFeedIterator();
 
             long startTime = DateTime.Now.Ticks;
@@ -116,7 +123,7 @@ namespace CosmosToPostgreSQL
             LogStartTable("Application", _resumeTimeApplication);
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 100 };
             FeedIterator<CosmosApplication> query = _applicationContainer.GetItemLinqQueryable<CosmosApplication>(requestOptions: options)
-                .Where(i => i.Ts >= _resumeTimeApplication - 1)
+                .Where(i => i.Ts >= _resumeTimeApplication - 1 && i.Ts < _startTs)
                 .OrderBy(e => e.Created).ToFeedIterator();
 
             long startTime = DateTime.Now.Ticks;
@@ -155,7 +162,7 @@ namespace CosmosToPostgreSQL
             LogStartTable("Instance", _resumeTimeInstance);
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 1000 };
             FeedIterator<CosmosInstance> query = _instanceContainer.GetItemLinqQueryable<CosmosInstance>(requestOptions: options)
-                .Where(i => i.Ts >= _resumeTimeInstance - 1)
+                .Where(i => i.Ts >= _resumeTimeInstance - 1 && i.Ts < _startTs)
                 .OrderBy(e => e.Created).ToFeedIterator();
 
             long startTime = DateTime.Now.Ticks;
@@ -190,13 +197,28 @@ namespace CosmosToPostgreSQL
             LogEnd("Instance", _processedTotalInstance, stopwatch.ElapsedMilliseconds / 1000, timestamp);
         }
 
+        private static async Task<CosmosInstance?> GetInstanceIfUpdatedAfterStart(string instanceId)
+        {
+            QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 1 };
+            FeedIterator<CosmosInstance> query = _instanceContainer.GetItemLinqQueryable<CosmosInstance>(requestOptions: options)
+                .Where(i => i.Id == instanceId && i.Ts > _startTs)
+                .ToFeedIterator();
+
+            if (query.HasMoreResults)
+            {
+                return (await query.ReadNextAsync())?.FirstOrDefault();
+            }
+
+            return null;
+        }
+
         private static async Task ProcessDataelements()
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
             LogStartTable("Dataelement", _resumeTimeDataElement);
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 1000 };
             FeedIterator<CosmosDataElement> query = _dataElementContainer.GetItemLinqQueryable<CosmosDataElement>(requestOptions: options)
-                .Where(d => d.Ts >= _resumeTimeDataElement - 1 && d.Ts < (_resumeTimeInstance < _startTs ? _startTs : _resumeTimeInstance))
+                .Where(d => d.Ts >= _resumeTimeDataElement - 1 && d.Ts < _startTs)
                 .OrderBy(d => d.Created).ToFeedIterator();
 
             long startTime = DateTime.Now.Ticks;
@@ -250,7 +272,7 @@ namespace CosmosToPostgreSQL
 
             QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = -1, MaxItemCount = 1000 };
             FeedIterator<CosmosInstanceEvent> query = _instanceEventContainer.GetItemLinqQueryable<CosmosInstanceEvent>(requestOptions: options)
-                .Where(e => e.Ts >= _resumeTimeInstanceEvent - 1)
+                .Where(e => e.Ts >= _resumeTimeInstanceEvent - 1 && e.Ts < _startTs)
                 .OrderBy(e => e.Ts).ToFeedIterator(); //Created is missing in index, should have used created
 
             long startTime = DateTime.Now.Ticks;
@@ -298,7 +320,11 @@ namespace CosmosToPostgreSQL
             }
             else
             {
-                LogError("App not found for text with id " + textResource.Id);
+                if (!_textWhitelist.Contains(textResource.Id))
+                {
+                    LogError("App not found for text with id " + textResource.Id);
+                }
+
                 return;
 
                 //throw new ArgumentException("App not found for " + textResource.Id);
@@ -328,11 +354,12 @@ namespace CosmosToPostgreSQL
             await pgcom.ExecuteNonQueryAsync();
         }
 
-        private static async Task InsertInstance(CosmosInstance instance)
+        private static async Task<long> InsertInstance(CosmosInstance instance)
         {
             instance.Data = null;
             await using NpgsqlCommand pgcomInsert = _dataSource.CreateCommand("INSERT INTO storage.instances(partyId, alternateId, instance, created, lastChanged, org, appId, taskId)" +
-                " VALUES ($1, $2, jsonb_strip_nulls($3), $4, $5, $6, $7, $8) ON CONFLICT(id) DO UPDATE SET instance = jsonb_strip_nulls($3), lastChanged = $5, taskId = $8");
+                " VALUES ($1, $2, jsonb_strip_nulls($3), $4, $5, $6, $7, $8) ON CONFLICT(alternateId) DO UPDATE SET instance = jsonb_strip_nulls($3), lastChanged = $5, taskId = $8 " +
+                "RETURNING id");
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Bigint, long.Parse(instance.InstanceOwner.PartyId));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(instance.Id));
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Jsonb, instance);
@@ -342,28 +369,7 @@ namespace CosmosToPostgreSQL
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance.AppId);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance?.Process?.CurrentTask?.ElementId ?? (object)DBNull.Value);
 
-            try
-            {
-                await pgcomInsert.ExecuteNonQueryAsync();
-            }
-            catch (PostgresException ex)
-            {
-                if (ex.MessageText.StartsWith("duplicate key value violates unique constraint"))
-                {
-                    // Instance updated after first iteration of convertion program
-                    await using NpgsqlCommand pgcomUpdate = _dataSource.CreateCommand("UPDATE storage.instances set lastChanged = $3, taskId = $4, instance= jsonb_strip_nulls($2) WHERE alternateId = $1");
-                    pgcomUpdate.Parameters.AddWithValue(NpgsqlDbType.Uuid, new Guid(instance.Id));
-                    pgcomUpdate.Parameters.AddWithValue(NpgsqlDbType.Jsonb, instance);
-                    pgcomUpdate.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, instance.LastChanged ?? DateTime.Now);
-                    pgcomUpdate.Parameters.AddWithValue(NpgsqlDbType.Text, instance?.Process?.CurrentTask?.ElementId ?? (object)DBNull.Value);
-
-                    await pgcomUpdate.ExecuteNonQueryAsync();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            return (long)await pgcomInsert.ExecuteScalarAsync();
         }
 
         private static async Task InsertDataElement(CosmosDataElement element)
@@ -441,17 +447,54 @@ namespace CosmosToPostgreSQL
                 }
             }
 
-            if (internalId == 0)
+            if (internalId == 0 && !_dataelementWhitelist.Contains(element.InstanceGuid))
             {
+                CosmosInstance instance = await GetInstanceIfUpdatedAfterStart(element.InstanceGuid);
+                if (instance != null)
+                {
+                    lock (_instancesUpdatedAfterStart)
+                    {
+                        if (_instancesUpdatedAfterStart.TryGetValue(element.InstanceGuid, out internalId))
+                        {
+                            return internalId;
+                        }
+
+                        internalId = InsertInstance(instance).Result;
+                        _instancesUpdatedAfterStart[element.InstanceGuid] = internalId;
+                        return internalId;
+                    }
+                }
+
                 _errorsInstance++;
-                string msg = $"Could not find internal instance id for guid: {id}, data element id: {element.Id}, " +
-                    $"created {element.Created}, last changed {element.LastChanged}, blob {element.BlobStoragePath}";
+                var blob = element.BlobStoragePath.Split('/');
+                string app = blob[0] + "/" + blob[1];
+                string msg = $"Could not find internal instance id for guid;{id};data element id;{element.Id};" +
+                    $"created;{element.Created?.ToString("yyyy-MM-dd HH:mm:ss")};last changed;{element.LastChanged?.ToString("yyyy-MM-dd HH:mm:ss")};blob;{element.BlobStoragePath};app;{app}";
                 Console.WriteLine(msg);
                 LogError(msg);
                 ////throw new Exception(msg);
             }
 
             return internalId;
+        }
+
+        private static void ReadWhitelists()
+        {
+            foreach (string line in File.ReadAllLines($"WhitelistElements-{_environment}.csv"))
+            {
+                if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
+                {
+                    _dataelementWhitelist.Add(line.Split(';')[0]);
+                }
+            }
+
+            foreach (string line in File.ReadAllLines($"WhitelistTexts-{_environment}.csv"))
+            {
+                if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
+                {
+                    _textWhitelist.Add(line.Split(';')[0]);
+                }
+            }
         }
 
         private static async Task CosmosInitAsync()
