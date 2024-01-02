@@ -8,6 +8,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
 using Altinn.Platform.Storage.Interface.Models;
+using Common;
 
 namespace CosmosToPostgreSQL
 {
@@ -204,9 +205,13 @@ namespace CosmosToPostgreSQL
                 .Where(i => i.Id == instanceId && i.Ts > _startTs)
                 .ToFeedIterator();
 
-            if (query.HasMoreResults)
+            while (query.HasMoreResults)
             {
-                return (await query.ReadNextAsync())?.FirstOrDefault();
+                CosmosInstance? instance = (await query.ReadNextAsync())?.FirstOrDefault();
+                if (instance != null)
+                {
+                    return instance;
+                }
             }
 
             return null;
@@ -480,7 +485,7 @@ namespace CosmosToPostgreSQL
 
         private static void ReadWhitelists()
         {
-            foreach (string line in File.ReadAllLines($"WhitelistElements-{_environment}.csv"))
+            foreach (string line in File.ReadAllLines(@$"..\..\..\..\Common\bin\Debug\net8.0\WhitelistElements-{_environment}.csv"))
             {
                 if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
                 {
@@ -488,7 +493,7 @@ namespace CosmosToPostgreSQL
                 }
             }
 
-            foreach (string line in File.ReadAllLines($"WhitelistTexts-{_environment}.csv"))
+            foreach (string line in File.ReadAllLines(@$"..\..\..\..\Common\bin\Debug\net8.0\WhitelistTexts-{_environment}.csv"))
             {
                 if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
                 {

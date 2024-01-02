@@ -7,9 +7,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace CosmosToPostgreSQL
+namespace Common
 {
-    internal class CosmosApplication : Application
+    public class CosmosTextResource : TextResource
     {
         [JsonProperty(PropertyName = "_ts")]
         [JsonPropertyName("_ts")]

@@ -7,9 +7,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace CosmosToPostgreSQL
+namespace Common
 {
-    internal class CosmosInstanceEvent : InstanceEvent
+    public class CosmosInstance : Instance
     {
         [JsonProperty(PropertyName = "_ts")]
         [JsonPropertyName("_ts")]
