@@ -63,6 +63,7 @@ namespace Verify
             ReadWhitelists();
             await ProcessInstancesAll();
             await ProcessDataelementsAll();
+            await ProcessInstanceEventsAll();
         }
 
         private static async Task ProcessInstancesAll ()
@@ -81,6 +82,26 @@ namespace Verify
             await Task.WhenAll(tasks);
             sw.Stop();
             Console.WriteLine($"Time used for instances: {sw.ElapsedMilliseconds / 1000:N0}");
+            _missingSw.Close();
+            _diffSw.Close();
+        }
+
+        private static async Task ProcessInstanceEventsAll()
+        {
+            _missingSw = new StreamWriter($"InstanceEventsMissing-{_environment}.log", false);
+            _diffSw = new StreamWriter($"InstanceEventsDiff-{_environment}.log", false);
+            _missingSw.WriteLine(_cutoffEpoch);
+            _diffSw.WriteLine(_cutoffEpoch);
+            List<Task> tasks = new();
+
+            Stopwatch sw = Stopwatch.StartNew();
+            foreach (char partition in _partitions)
+            {
+                tasks.Add(ProcessInstanceEvents(partition));
+            }
+            await Task.WhenAll(tasks);
+            sw.Stop();
+            Console.WriteLine($"Time used for instance events: {sw.ElapsedMilliseconds / 1000:N0}");
             _missingSw.Close();
             _diffSw.Close();
         }
@@ -146,6 +167,46 @@ namespace Verify
                 lock (_lockObject)
                     _count += cInstances.Count;
                 Console.WriteLine($"{cInstances.Count:N0}, {_count:N0}");
+            }
+        }
+
+        private static async Task ProcessInstanceEvents(char partition)
+        {
+            QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = 16, MaxItemCount = 400_000 };
+            FeedIterator<CosmosInstanceEvent> query = _instanceEventContainer.GetItemLinqQueryable<CosmosInstanceEvent>(requestOptions: options)
+                .Where(i => i.Id.ToString().StartsWith(partition) && (_cutoffDateTime > DateTime.Now || i.Ts < _cutoffEpoch))
+                .OrderBy(i => i.Id).ToFeedIterator();
+
+            while (query.HasMoreResults)
+            {
+                var cosmosInstanceEvents = await query.ReadNextAsync();
+                //// Console.WriteLine(cosmosInstances.First().Id + " - " + cosmosInstances.Last().Id);
+                Task<SortedList<Guid, string>> instanceEventTask = ReadInstanceEvents((Guid)cosmosInstanceEvents.First().Id, (Guid)cosmosInstanceEvents.Last().Id);
+                SortedList<Guid, string> cInstanceEvents = new SortedList<Guid, string>();
+
+                foreach (CosmosInstanceEvent instanceEvent in cosmosInstanceEvents)
+                {
+                    cInstanceEvents.Add((Guid)instanceEvent.Id, JsonSerializer.Serialize(instanceEvent, _jsonOptions));
+                }
+                var pgInstanceEvents = await instanceEventTask;
+                foreach (var kvp in cInstanceEvents)
+                {
+                    pgInstanceEvents.TryGetValue(kvp.Key, out string? pgInstance);
+                    if (pgInstance == null)
+                    {
+                        lock (_missingSw)
+                            _missingSw.WriteLine($"Missing {kvp.Key}, {kvp.Value}");
+                    }
+                    else if (kvp.Value != pgInstance)
+                    {
+                        lock (_diffSw)
+                            _diffSw.WriteLine($"Diff in content\r\n{kvp.Value}\r\n{pgInstance}");
+                    }
+                }
+
+                lock (_lockObject)
+                    _count += cInstanceEvents.Count;
+                Console.WriteLine($"{cInstanceEvents.Count:N0}, {_count:N0}");
             }
         }
 
@@ -234,6 +295,22 @@ namespace Verify
             }
 
             return instances;
+        }
+
+        private static async Task<SortedList<Guid, string>> ReadInstanceEvents(Guid start, Guid end)
+        {
+            SortedList<Guid, string> instanceEvents = new SortedList<Guid, string>();
+            await using NpgsqlCommand pgcomReadApp = _dataSource.CreateCommand("select alternateId, event from storage.instanceevents where alternateId between $1 and $2");
+            pgcomReadApp.Parameters.AddWithValue(NpgsqlDbType.Uuid, start);
+            pgcomReadApp.Parameters.AddWithValue(NpgsqlDbType.Uuid, end);
+            await using NpgsqlDataReader reader = await pgcomReadApp.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                CosmosInstanceEvent instanceEvent = reader.GetFieldValue<CosmosInstanceEvent>("event");
+                instanceEvents.Add(reader.GetFieldValue<Guid>("alternateId"), JsonSerializer.Serialize(instanceEvent, _jsonOptions));
+            }
+
+            return instanceEvents;
         }
 
         private static async Task<SortedList<Guid, string>> ReadDataelements(string start, string end)
