@@ -13,6 +13,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Collections;
 using Common;
+using System.Xml.Linq;
 
 namespace Verify
 {
@@ -61,9 +62,39 @@ namespace Verify
             await CosmosInitAsync();
             await PostgresInitAsync();
             ReadWhitelists();
+            await ProcessApplicationsAll();
+            await ProcessTextsAll();
             await ProcessInstancesAll();
             await ProcessDataelementsAll();
             await ProcessInstanceEventsAll();
+        }
+
+        private static async Task ProcessApplicationsAll()
+        {
+            _missingSw = new StreamWriter($"ApplicationsMissing-{_environment}.log", false);
+            _diffSw = new StreamWriter($"ApplicationsDiff-{_environment}.log", false);
+            _missingSw.WriteLine(_cutoffEpoch);
+            _diffSw.WriteLine(_cutoffEpoch);
+            Stopwatch sw = Stopwatch.StartNew();
+            await ProcessApplications();
+            sw.Stop();
+            Console.WriteLine($"Time used for applications: {sw.ElapsedMilliseconds / 1000:N0}");
+            _missingSw.Close();
+            _diffSw.Close();
+        }
+
+        private static async Task ProcessTextsAll()
+        {
+            _missingSw = new StreamWriter($"TextsMissing-{_environment}.log", false);
+            _diffSw = new StreamWriter($"TextsDiff-{_environment}.log", false);
+            _missingSw.WriteLine(_cutoffEpoch);
+            _diffSw.WriteLine(_cutoffEpoch);
+            Stopwatch sw = Stopwatch.StartNew();
+            await ProcessTexts();
+            sw.Stop();
+            Console.WriteLine($"Time used for texts: {sw.ElapsedMilliseconds / 1000:N0}");
+            _missingSw.Close();
+            _diffSw.Close();
         }
 
         private static async Task ProcessInstancesAll ()
@@ -124,6 +155,86 @@ namespace Verify
             Console.WriteLine($"Time used for data elements: {sw.ElapsedMilliseconds / 1000:N0}");
             _missingSw.Close();
             _diffSw.Close();
+        }
+
+        private static async Task ProcessApplications()
+        {
+            QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = 16, MaxItemCount = 50000 };
+            FeedIterator<CosmosApplication> query = _applicationContainer.GetItemLinqQueryable<CosmosApplication>(requestOptions: options)
+                .Where(i => (_cutoffDateTime > DateTime.Now || i.Ts < _cutoffEpoch))
+                .OrderBy(i => i.Id).ToFeedIterator();
+
+            while (query.HasMoreResults)
+            {
+                var cosmosApplications = await query.ReadNextAsync();
+                Task<SortedList<string, string>> applicationTask = ReadApplications();
+                SortedList<string, string> cApplications = new SortedList<string, string>();
+
+                foreach (CosmosApplication application in cosmosApplications)
+                {
+                    application.Title = application.Title?.OrderBy(i => i.Key).ToDictionary();
+                    cApplications.Add(application.Id, JsonSerializer.Serialize(application, _jsonOptions));
+                }
+                var pgApplications = await applicationTask;
+                foreach (var kvp in cApplications)
+                {
+                    pgApplications.TryGetValue(kvp.Key, out string? pgInstance);
+                    if (pgInstance == null)
+                    {
+                        lock (_missingSw)
+                            _missingSw.WriteLine($"Missing {kvp.Key}, {kvp.Value}");
+                    }
+                    else if (kvp.Value != pgInstance)
+                    {
+                        lock (_diffSw)
+                            _diffSw.WriteLine($"Diff in content\r\n{kvp.Value}\r\n{pgInstance}");
+                    }
+                }
+
+                lock (_lockObject)
+                    _count += cApplications.Count;
+                Console.WriteLine($"{cApplications.Count:N0}, {_count:N0}");
+            }
+        }
+
+        private static async Task ProcessTexts()
+        {
+            QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = 16, MaxItemCount = 50000 };
+            FeedIterator<CosmosTextResource> query = _textContainer.GetItemLinqQueryable<CosmosTextResource>(requestOptions: options)
+                .Where(i => (_cutoffDateTime > DateTime.Now || i.Ts < _cutoffEpoch))
+                .OrderBy(i => i.Id).ToFeedIterator();
+
+            while (query.HasMoreResults)
+            {
+                var cosmosTexts = await query.ReadNextAsync();
+                Task<SortedList<string, string>> textTask = ReadTexts();
+                SortedList<string, string> cTexts = new SortedList<string, string>();
+
+                foreach (CosmosTextResource text in cosmosTexts)
+                {
+                    cTexts.Add($"{text.Id}", JsonSerializer.Serialize(text, _jsonOptions));
+                }
+                var pgTexts = await textTask;
+                foreach (var kvp in cTexts)
+                {
+                    pgTexts.TryGetValue(kvp.Key, out string? pgInstance);
+                    if (pgInstance == null)
+                    {
+                        if (!_textWhitelist.Contains(kvp.Key))
+                            lock (_missingSw)
+                                _missingSw.WriteLine($"Missing {kvp.Key}, {kvp.Value}");
+                    }
+                    else if (kvp.Value != pgInstance)
+                    {
+                        lock (_diffSw)
+                            _diffSw.WriteLine($"Diff in content\r\n{kvp.Value}\r\n{pgInstance}");
+                    }
+                }
+
+                lock (_lockObject)
+                    _count += cTexts.Count;
+                Console.WriteLine($"{cTexts.Count:N0}, {_count:N0}");
+            }
         }
 
         private static async Task ProcessInstances(char partition)
@@ -334,6 +445,36 @@ namespace Verify
             return instances;
         }
 
+        private static async Task<SortedList<string, string>> ReadApplications()
+        {
+            SortedList<string, string> applications = new SortedList<string, string>();
+            await using NpgsqlCommand pgcomReadApp = _dataSource.CreateCommand("select app, org, application from storage.applications");
+            await using NpgsqlDataReader reader = await pgcomReadApp.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                CosmosApplication application = reader.GetFieldValue<CosmosApplication>("application");
+                application.Id = application.Id.Replace('/', '-');
+                application.Title = application.Title?.OrderBy(i => i.Key).ToDictionary();
+                applications.Add(reader.GetFieldValue<string>("org").Replace('/', '-') + "-" + reader.GetFieldValue<string>("app"), JsonSerializer.Serialize(application, _jsonOptions));
+            }
+
+            return applications;
+        }
+
+        private static async Task<SortedList<string, string>> ReadTexts()
+        {
+            SortedList<string, string> texts = new SortedList<string, string>();
+            await using NpgsqlCommand pgcomReadApp = _dataSource.CreateCommand("select app, org, language, textresource from storage.texts");
+            await using NpgsqlDataReader reader = await pgcomReadApp.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                CosmosTextResource text = reader.GetFieldValue<CosmosTextResource>("textresource");
+                texts.Add(reader.GetFieldValue<string>("org") + "-" + reader.GetFieldValue<string>("app") + "-" + reader.GetFieldValue<string>("language"), JsonSerializer.Serialize(text, _jsonOptions));
+            }
+
+            return texts;
+        }
+
         private static async Task CosmosInitAsync()
         {
             CosmosClientOptions options = new()
@@ -362,7 +503,7 @@ namespace Verify
             {
                 if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
                 {
-                    _dataelementWhitelist.Add(line.Split(';')[0]);
+                    _dataelementWhitelist.Add(line.Split(';')[0].Trim());
                 }
             }
 
@@ -370,7 +511,7 @@ namespace Verify
             {
                 if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
                 {
-                    _textWhitelist.Add(line.Split(';')[0]);
+                    _textWhitelist.Add(line.Split(';')[0].Trim());
                 }
             }
         }

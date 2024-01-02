@@ -489,7 +489,7 @@ namespace CosmosToPostgreSQL
             {
                 if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
                 {
-                    _dataelementWhitelist.Add(line.Split(';')[0]);
+                    _dataelementWhitelist.Add(line.Split(';')[0].Trim());
                 }
             }
 
@@ -497,7 +497,7 @@ namespace CosmosToPostgreSQL
             {
                 if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
                 {
-                    _textWhitelist.Add(line.Split(';')[0]);
+                    _textWhitelist.Add(line.Split(';')[0].Trim());
                 }
             }
         }
