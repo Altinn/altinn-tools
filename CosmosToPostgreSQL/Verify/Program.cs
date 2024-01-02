@@ -53,11 +53,10 @@ namespace Verify
             builder.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
             IConfiguration config = builder.Build();
 
-            _cosmosUrl = config["cosmosUrl"];
-            _cosmosSecret = config["cosmosSecret"];
-            _pgConnectionString = config["pgConnectionString"];
             _environment = config["environment"];
-
+            _cosmosUrl = config[$"{_environment}:cosmosUrl"];
+            _cosmosSecret = config[$"{_environment}:cosmosSecret"];
+            _pgConnectionString = config[$"{_environment}:pgConnectionString"];
 
             await CosmosInitAsync();
             await PostgresInitAsync();
