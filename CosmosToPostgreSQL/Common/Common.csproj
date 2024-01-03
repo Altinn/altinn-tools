@@ -11,7 +11,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="WhitelistElements-TT02.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="WhitelistElements-Prod.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="WhitelistTexts-TT02.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="WhitelistTexts-Prod.csv">

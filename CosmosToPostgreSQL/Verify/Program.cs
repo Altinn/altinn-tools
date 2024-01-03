@@ -253,6 +253,10 @@ namespace Verify
                     instance.Data = null;
                     instance.DataValues = instance.DataValues?.OrderBy(i => i.Key).ToDictionary();
                     instance.PresentationTexts = instance.PresentationTexts?.OrderBy(i => i.Key).ToDictionary();
+                    if (instance.DataValues != null && instance.DataValues.TryGetValue("ReceiversReference", out string? value) && value == null)
+                    {
+                        instance.DataValues.Remove("ReceiversReference");
+                    }
                     cInstances.Add(Guid.Parse(instance.Id), JsonSerializer.Serialize(instance, _jsonOptions));
                 }
                 var pgInstances = await instanceTask;
@@ -331,6 +335,8 @@ namespace Verify
 
                 foreach (CosmosDataElement element in cosmosElements)
                 {
+                    if (element.Filename != null && element.Filename.Contains('\0'))
+                        element.Filename = element.Filename.Replace("\0", null);
                     cElements.Add(Guid.Parse(element.Id), JsonSerializer.Serialize(element, _jsonOptions));
                 }
                 var pgElements = await instanceTask;
