@@ -12,15 +12,12 @@ using Common;
 
 namespace CosmosToPostgreSQL
 {
-    public class Program
+    public static class Program
     {
         private static string _cosmosUrl;
         private static string _cosmosSecret;
         private static string _pgConnectionString;
         private static string _environment;
-
-        const string _logFilename = nameof(Program) + ".log";
-        const string _errorFilename = nameof(Program) + "-errors.log";
 
         private static Container _instanceEventContainer;
         private static Container _instanceContainer;
@@ -41,13 +38,15 @@ namespace CosmosToPostgreSQL
         private static int _processedTotalText = 0;
 
         private static int _errorsInstance = 0;
-        private static bool _abortOnError = false;
-        private static object _lockObject = new object();
-        private static long _startTs = DateTimeOffset.Now.ToUnixTimeSeconds();
+        private static readonly bool _abortOnError = false;
+        private static readonly object _lockObject = new();
+        private static readonly long _startTs = DateTimeOffset.Now.ToUnixTimeSeconds();
 
-        private static SortedSet<string> _dataelementWhitelist = new();
-        private static SortedSet<string> _textWhitelist = new();
-        private static readonly Dictionary<string, long> _instancesUpdatedAfterStart = new();
+        private static SortedSet<string> _dataelementWhitelist = [];
+        private static SortedSet<string> _textWhitelist = [];
+        private static readonly Dictionary<string, long> _instancesUpdatedAfterStart = [];
+        private static string _logFilename;
+        private static string _errorFilename;
 
         public static async Task Main()
         {
@@ -59,6 +58,8 @@ namespace CosmosToPostgreSQL
             _cosmosUrl = config[$"{_environment}:cosmosUrl"];
             _cosmosSecret = config[$"{_environment}:cosmosSecret"];
             _pgConnectionString = config[$"{_environment}:pgConnectionString"];
+            _logFilename = $"{nameof(Program)}-{_environment}.log";
+            _errorFilename = $"{nameof(Program)}-errors-{_environment}.log";
 
             try
             {
@@ -172,7 +173,7 @@ namespace CosmosToPostgreSQL
             {
                 long iterationStartTime = DateTime.Now.Ticks;
                 int processedInIteration = 0;
-                List<Task> tasks = new();
+                List<Task> tasks = [];
                 foreach (CosmosInstance instance in await query.ReadNextAsync())
                 {
                     tasks.Add(InsertInstance(instance));
@@ -232,7 +233,7 @@ namespace CosmosToPostgreSQL
             {
                 long iterationStartTime = DateTime.Now.Ticks;
                 int processedInIteration = 0;
-                List<Task> tasks = new();
+                List<Task> tasks = [];
                 foreach (CosmosDataElement dataElement in await query.ReadNextAsync())
                 {
                     if (dataElement.FileScanResult != null && dataElement.FileScanResult.ToString().StartsWith('{'))
@@ -372,7 +373,7 @@ namespace CosmosToPostgreSQL
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.TimestampTz, instance.LastChanged ?? DateTime.Now);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance.Org);
             pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance.AppId);
-            pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance?.Process?.CurrentTask?.ElementId ?? (object)DBNull.Value);
+            pgcomInsert.Parameters.AddWithValue(NpgsqlDbType.Text, instance.Process?.CurrentTask?.ElementId ?? (object)DBNull.Value);
 
             return (long)await pgcomInsert.ExecuteScalarAsync();
         }
@@ -383,7 +384,7 @@ namespace CosmosToPostgreSQL
             if (instanceId == 0)
                 return;
 
-            if (element.Filename != null && element.Filename.Contains("\0"))
+            if (element.Filename != null && element.Filename.Contains('\0'))
                 element.Filename = element.Filename.Replace("\0", null);
 
             await using NpgsqlCommand pgcomInsert = _dataSource.CreateCommand("INSERT INTO storage.dataelements(instanceInternalId, instanceGuid, alternateId, element)" +
@@ -485,19 +486,27 @@ namespace CosmosToPostgreSQL
 
         private static void ReadWhitelists()
         {
-            foreach (string line in File.ReadAllLines(@$"..\..\..\..\Common\bin\Debug\net8.0\WhitelistElements-{_environment}.csv"))
+            string fileName = @$"..\..\..\..\Common\bin\Debug\net8.0\WhitelistElements-{_environment}.csv";
+            if (File.Exists(fileName))
             {
-                if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
+                foreach (string line in File.ReadAllLines(fileName))
                 {
-                    _dataelementWhitelist.Add(line.Split(';')[0].Trim());
+                    if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
+                    {
+                        _dataelementWhitelist.Add(line.Split(';')[0].Trim());
+                    }
                 }
             }
 
-            foreach (string line in File.ReadAllLines(@$"..\..\..\..\Common\bin\Debug\net8.0\WhitelistTexts-{_environment}.csv"))
+            fileName = @$"..\..\..\..\Common\bin\Debug\net8.0\WhitelistTexts-{_environment}.csv";
+            if (File.Exists(fileName))
             {
-                if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
+                foreach (string line in File.ReadAllLines(fileName))
                 {
-                    _textWhitelist.Add(line.Split(';')[0].Trim());
+                    if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
+                    {
+                        _textWhitelist.Add(line.Split(';')[0].Trim());
+                    }
                 }
             }
         }
@@ -575,7 +584,7 @@ namespace CosmosToPostgreSQL
                 $" server {_pgConnectionString.Split(';')[0].Split('=')[1]}\r\n");
         }
 
-        private static void LogError(string msg, Exception e = null)
+        private static void LogError(string msg, Exception? e = null)
         {
             Console.WriteLine($"{DateTime.Now} {msg} {e?.Message ?? null}");
             lock (_lockObject)

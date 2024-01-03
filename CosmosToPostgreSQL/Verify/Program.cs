@@ -17,13 +17,10 @@ using System.Xml.Linq;
 
 namespace Verify
 {
-    internal class Program
+    internal static class Program
     {
-        const string _logFilename = nameof(Program) + ".log";
-        const string _errorFilename = nameof(Program) + "-errors.log";
-
-        private static readonly DateTime _cutoffDateTime = DateTime.Parse("2023-12-31 00:49");
-        private static readonly long _cutoffEpoch = new DateTimeOffset(_cutoffDateTime).ToUniversalTime().ToUnixTimeSeconds();
+        private static DateTime _cutoffDateTime;
+        private static long _cutoffEpoch;
         private static readonly object _lockObject = new object();
         private static readonly char[] _partitions = new char[] { '0','1','2','3','4','5','6','7','8','9','0','a','b','c','d','e','f' };
         private static readonly JsonSerializerOptions _jsonOptions = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
@@ -57,9 +54,11 @@ namespace Verify
             _cosmosUrl = config[$"{_environment}:cosmosUrl"];
             _cosmosSecret = config[$"{_environment}:cosmosSecret"];
             _pgConnectionString = config[$"{_environment}:pgConnectionString"];
+            _cutoffDateTime = DateTime.Parse(config[$"{_environment}:cutoffDateTime"] ?? "2030-01-01");
+            _cutoffEpoch = new DateTimeOffset(_cutoffDateTime).ToUniversalTime().ToUnixTimeSeconds();
 
             await CosmosInitAsync();
-            await PostgresInitAsync();
+            PostgresInit();
             ReadWhitelists();
             await ProcessApplicationsAll();
             await ProcessTextsAll();
@@ -246,13 +245,11 @@ namespace Verify
             while (query.HasMoreResults)
             {
                 var cosmosInstances = await query.ReadNextAsync();
-                //// Console.WriteLine(cosmosInstances.First().Id + " - " + cosmosInstances.Last().Id);
                 Task<SortedList<Guid, string>> instanceTask = ReadInstances(cosmosInstances.First().Id, cosmosInstances.Last().Id);
                 SortedList<Guid, string> cInstances = new SortedList<Guid, string>();
 
                 foreach (CosmosInstance instance in cosmosInstances)
                 {
-                    // Todo: verify that data should always be null. Found actual data here: 00a4b483-d7e6-4f19-8a11-4405a9d74a0d
                     instance.Data = null;
                     instance.DataValues = instance.DataValues?.OrderBy(i => i.Key).ToDictionary();
                     instance.PresentationTexts = instance.PresentationTexts?.OrderBy(i => i.Key).ToDictionary();
@@ -282,7 +279,7 @@ namespace Verify
 
         private static async Task ProcessInstanceEvents(char partition)
         {
-            QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = 16, MaxItemCount = 400_000 };
+            QueryRequestOptions options = new() { MaxBufferedItemCount = 0, MaxConcurrency = 16, MaxItemCount = 50_000 };
             FeedIterator<CosmosInstanceEvent> query = _instanceEventContainer.GetItemLinqQueryable<CosmosInstanceEvent>(requestOptions: options)
                 .Where(i => i.Id.ToString().StartsWith(partition) && (_cutoffDateTime > DateTime.Now || i.Ts < _cutoffEpoch))
                 .OrderBy(i => i.Id).ToFeedIterator();
@@ -290,7 +287,6 @@ namespace Verify
             while (query.HasMoreResults)
             {
                 var cosmosInstanceEvents = await query.ReadNextAsync();
-                //// Console.WriteLine(cosmosInstances.First().Id + " - " + cosmosInstances.Last().Id);
                 Task<SortedList<Guid, string>> instanceEventTask = ReadInstanceEvents((Guid)cosmosInstanceEvents.First().Id, (Guid)cosmosInstanceEvents.Last().Id);
                 SortedList<Guid, string> cInstanceEvents = new SortedList<Guid, string>();
 
@@ -335,10 +331,6 @@ namespace Verify
 
                 foreach (CosmosDataElement element in cosmosElements)
                 {
-                    // Todo: verify that data should always be null. Found actual data here: 00a4b483-d7e6-4f19-8a11-4405a9d74a0d
-                    //element.Data = null;
-                    //element.DataValues = element.DataValues?.OrderBy(i => i.Key).ToDictionary();
-                    //element.PresentationTexts = element.PresentationTexts?.OrderBy(i => i.Key).ToDictionary();
                     cElements.Add(Guid.Parse(element.Id), JsonSerializer.Serialize(element, _jsonOptions));
                 }
                 var pgElements = await instanceTask;
@@ -395,9 +387,6 @@ namespace Verify
             await using NpgsqlDataReader reader = await pgcomReadApp.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                //Guid id = reader.GetFieldValue<Guid>("alternateId");
-                //CosmosInstance jsoni = reader.GetFieldValue<CosmosInstance>("instance");
-                //string json = reader.GetFieldValue<string>("instance");
                 CosmosInstance instance = reader.GetFieldValue<CosmosInstance>("instance");
                 instance.DataValues = instance.DataValues?.OrderBy(i => i.Key).ToDictionary();
                 instance.PresentationTexts = instance.PresentationTexts?.OrderBy(i => i.Key).ToDictionary();
@@ -432,12 +421,7 @@ namespace Verify
             await using NpgsqlDataReader reader = await pgcomReadApp.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                //Guid id = reader.GetFieldValue<Guid>("alternateId");
-                //CosmosInstance jsoni = reader.GetFieldValue<CosmosInstance>("instance");
-                //string json = reader.GetFieldValue<string>("instance");
                 CosmosDataElement element = reader.GetFieldValue<CosmosDataElement>("element");
-                //element.DataValues = element.DataValues?.OrderBy(i => i.Key).ToDictionary();
-                //element.PresentationTexts = element.PresentationTexts?.OrderBy(i => i.Key).ToDictionary();
                 instances.Add(reader.GetFieldValue<Guid>("alternateId"), JsonSerializer.Serialize(element, _jsonOptions));
             }
 
@@ -491,26 +475,34 @@ namespace Verify
             _textContainer = await db.CreateContainerIfNotExistsAsync("texts", "/org");
         }
 
-        private static async Task PostgresInitAsync()
+        private static void PostgresInit()
         {
             _dataSource = NpgsqlDataSource.Create(_pgConnectionString);
         }
 
         private static void ReadWhitelists()
         {
-            foreach (string line in File.ReadAllLines(@$"..\..\..\..\Common\bin\Debug\net8.0\WhitelistElements-{_environment}.csv"))
+            string fileName = @$"..\..\..\..\Common\bin\Debug\net8.0\WhitelistElements-{_environment}.csv";
+            if (File.Exists(fileName))
             {
-                if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
+                foreach (string line in File.ReadAllLines(fileName))
                 {
-                    _dataelementWhitelist.Add(line.Split(';')[0].Trim());
+                    if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
+                    {
+                        _dataelementWhitelist.Add(line.Split(';')[0].Trim());
+                    }
                 }
             }
 
-            foreach (string line in File.ReadAllLines(@$"..\..\..\..\Common\bin\Debug\net8.0\WhitelistTexts-{_environment}.csv"))
+            fileName = @$"..\..\..\..\Common\bin\Debug\net8.0\WhitelistTexts-{_environment}.csv";
+            if (File.Exists(fileName))
             {
-                if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
+                foreach (string line in File.ReadAllLines(fileName))
                 {
-                    _textWhitelist.Add(line.Split(';')[0].Trim());
+                    if (!line.StartsWith('#') && !string.IsNullOrWhiteSpace(line))
+                    {
+                        _textWhitelist.Add(line.Split(';')[0].Trim());
+                    }
                 }
             }
         }
