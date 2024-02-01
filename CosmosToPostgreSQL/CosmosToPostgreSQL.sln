@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33627.172
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CosmosToPostgreSQL", "CosmosToPostgreSQL\CosmosToPostgreSQL.csproj", "{B893216F-BC3C-4497-987C-B301AC7ABA1F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CosmosToPostgreSQL", "CosmosToPostgreSQL\CosmosToPostgreSQL.csproj", "{B893216F-BC3C-4497-987C-B301AC7ABA1F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Verify", "Verify\Verify.csproj", "{9E542510-357B-4EB1-BE32-BFBD9AB0848F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{6D03054A-9610-4435-B606-BA0F5C7E2849}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{B893216F-BC3C-4497-987C-B301AC7ABA1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B893216F-BC3C-4497-987C-B301AC7ABA1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B893216F-BC3C-4497-987C-B301AC7ABA1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E542510-357B-4EB1-BE32-BFBD9AB0848F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E542510-357B-4EB1-BE32-BFBD9AB0848F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E542510-357B-4EB1-BE32-BFBD9AB0848F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E542510-357B-4EB1-BE32-BFBD9AB0848F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D03054A-9610-4435-B606-BA0F5C7E2849}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D03054A-9610-4435-B606-BA0F5C7E2849}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D03054A-9610-4435-B606-BA0F5C7E2849}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D03054A-9610-4435-B606-BA0F5C7E2849}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

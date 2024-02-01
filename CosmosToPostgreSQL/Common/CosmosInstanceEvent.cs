@@ -7,16 +7,12 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace CosmosToPostgreSQL
+namespace Common
 {
-    internal class CosmosDataElement : DataElement
+    public class CosmosInstanceEvent : InstanceEvent
     {
         [JsonProperty(PropertyName = "_ts")]
         [JsonPropertyName("_ts")]
-        public int Ts { get; set; }
-
-        [JsonProperty(PropertyName = "fileScanResult")]
-        [JsonPropertyName("fileScanResult")]
-        public new object FileScanResult { get; set; }
+        public long Ts { get; set; }
     }
 }
