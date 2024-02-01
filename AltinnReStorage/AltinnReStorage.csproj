@@ -2,6 +2,9 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
+    <!--Cannot be upgraded to .NET 8 until 
+    https://github.com/natemcmaster/CommandLineUtils/issues/541
+    is fixed and dependency upgraded.-->
 		<TargetFramework>net7.0</TargetFramework>
 	</PropertyGroup>
 
