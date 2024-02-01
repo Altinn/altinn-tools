@@ -124,7 +124,7 @@ namespace RepoCleanup.Application.CommandHandlers
                 }
 
                 string providerName = FindProvider(xsdDocument, formMetaData.DataFormatProviderType);
-                string schemaVersionFolder = $"{repositoryFolder}\\{providerName}\\" 
+                string schemaVersionFolder = $"{repositoryFolder}\\{providerName}\\"
                     + $"{formMetaData.DataFormatID}\\{formMetaData.DataFormatVersion}";
 
                 Directory.CreateDirectory(schemaVersionFolder);
@@ -136,7 +136,7 @@ namespace RepoCleanup.Application.CommandHandlers
                 // The schema might have been downloaded under a separate service.
                 if (!System.IO.File.Exists(filePath))
                 {
-                    using (FileStream fileStream = new (filePath, FileMode.OpenOrCreate))
+                    using (FileStream fileStream = new(filePath, FileMode.OpenOrCreate))
                     {
                         await xsdDocument.SaveAsync(fileStream, SaveOptions.None, CancellationToken.None);
                     }
@@ -159,7 +159,7 @@ namespace RepoCleanup.Application.CommandHandlers
             namespaceManager.AddNamespace("xsd", "http://www.w3.org/2001/XMLSchema");
 
             XElement dataFormatProviderElement = xsdDocument.XPathSelectElement(
-                "xsd:schema/xsd:complexType/xsd:attribute[@name='dataFormatProvider']", 
+                "xsd:schema/xsd:complexType/xsd:attribute[@name='dataFormatProvider']",
                 namespaceManager);
 
             string foundProvider = dataFormatProviderType;
@@ -190,13 +190,11 @@ namespace RepoCleanup.Application.CommandHandlers
 
         private static void CloneRepository(string repoFolder, string remotePath)
         {
-            CloneOptions cloneOptions = new()
+            CloneOptions cloneOptions = new();
+            cloneOptions.FetchOptions.CredentialsProvider = (_url, _user, _cred) => new UsernamePasswordCredentials
             {
-                CredentialsProvider = (a, b, c) => new UsernamePasswordCredentials
-                {
-                    Username = Globals.GiteaToken,
-                    Password = string.Empty
-                }
+                Username = Globals.GiteaToken,
+                Password = string.Empty
             };
 
             LibGit2Sharp.Repository.Clone(remotePath + ".git", repoFolder, cloneOptions);
@@ -228,7 +226,7 @@ namespace RepoCleanup.Application.CommandHandlers
                 Commit commit = repo.Commit("Added XSD schemas copied from Altinn II", author, author);
             }
         }
-        
+
         private static void PushChanges(string localRepoPath)
         {
             using (LibGit2Sharp.Repository repo = new(localRepoPath))
