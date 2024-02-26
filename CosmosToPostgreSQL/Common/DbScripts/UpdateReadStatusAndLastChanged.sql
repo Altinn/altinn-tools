@@ -75,16 +75,20 @@ BEGIN
     WHILE _startId <= _maxId
     LOOP
         with changedToUpdate as (
-            select distinct on (i.id) i.id, (d.element ->> 'LastChanged')::TIMESTAMPTZ as dlc, d.element ->> 'LastChangedBy' as dlcb, lastchanged as ilc from storage.instances i
-            join storage.dataelements d on d.instanceinternalid = i.id
+            select distinct on (i.id) i.id,
+                (d.element ->> 'LastChanged')::TIMESTAMPTZ as ElementLastChangedAsTz,
+                d.element ->> 'LastChanged' as ElementLastChangedAsText,
+                d.element ->> 'LastChangedBy' as ElementLastChangedByAsText
+            from storage.instances i
+                join storage.dataelements d on d.instanceinternalid = i.id
             where (d.element ->> 'LastChanged')::TIMESTAMPTZ > i.lastchanged and i.id between _startId and _startId + _batchSize
             order by i.id, (d.element ->> 'LastChanged')::TIMESTAMPTZ desc
         )
         update storage.instances
-            set lastchanged = changedToUpdate.dlc,
+            set lastchanged = changedToUpdate.ElementLastChangedAsTz,
             instance = instance
-                || jsonb_set('{"LastChanged":""}', '{LastChanged}', to_jsonb(dlc))
-                || jsonb_set('{"LastChangedBy":""}', '{LastChangedBy}', to_jsonb(dlcb))
+                || jsonb_set('{"LastChanged":""}', '{LastChanged}', to_jsonb(ElementLastChangedAsText))
+                || jsonb_set('{"LastChangedBy":""}', '{LastChangedBy}', to_jsonb(ElementLastChangedByAsText))
             from changedToUpdate
                 where changedToUpdate.id = storage.instances.id;
 
