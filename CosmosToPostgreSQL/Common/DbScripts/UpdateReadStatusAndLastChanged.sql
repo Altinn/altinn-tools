@@ -76,21 +76,32 @@ BEGIN
     LOOP
         with changedToUpdate as (
             select distinct on (i.id) i.id,
+                d.id as ElementId,
+                
+                -- Make sure that lastChanged has the Postgres precision (6 digits). The timestamp from C# DateTime and then json serialize has 7 digits
                 (d.element ->> 'LastChanged')::TIMESTAMPTZ as ElementLastChangedAsTz,
-                d.element ->> 'LastChanged' as ElementLastChangedAsText,
+
+                REPLACE(((d.element ->> 'LastChanged')::TIMESTAMPTZ AT TIME ZONE 'UTC')::TEXT, ' ', 'T') || 'Z' as ElementLastChangedAsText,
                 d.element ->> 'LastChangedBy' as ElementLastChangedByAsText
             from storage.instances i
                 join storage.dataelements d on d.instanceinternalid = i.id
-            where (d.element ->> 'LastChanged')::TIMESTAMPTZ > i.lastchanged and i.id between _startId and _startId + _batchSize
-            order by i.id, (d.element ->> 'LastChanged')::TIMESTAMPTZ desc
-        )
+            where d.element ->> 'LastChanged' > i.instance ->> 'LastChanged' and i.id between _startId and _startId + _batchSize
+            order by i.id, d.element ->> 'LastChanged' desc
+        ),
+        u2 as (
         update storage.instances
             set lastchanged = changedToUpdate.ElementLastChangedAsTz,
             instance = instance
                 || jsonb_set('{"LastChanged":""}', '{LastChanged}', to_jsonb(ElementLastChangedAsText))
                 || jsonb_set('{"LastChangedBy":""}', '{LastChangedBy}', to_jsonb(ElementLastChangedByAsText))
             from changedToUpdate
-                where changedToUpdate.id = storage.instances.id;
+                where changedToUpdate.id = storage.instances.id
+        )
+        update storage.dataelements
+            set element = element
+                || jsonb_set('{"LastChanged":""}', '{LastChanged}', to_jsonb(ElementLastChangedAsText))
+            from changedToUpdate
+                where changedToUpdate.ElementId = storage.dataelements.id;        
 
         GET DIAGNOSTICS _updateCount = ROW_COUNT;
         RAISE NOTICE 'StartId: %, updates: %', _startId, _updateCount;
