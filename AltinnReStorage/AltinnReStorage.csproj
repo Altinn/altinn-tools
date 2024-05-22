@@ -14,12 +14,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Altinn.Platform.Storage.Interface" Version="3.24.0" />
+		<PackageReference Include="Altinn.Platform.Storage.Interface" Version="3.25.0" />
 		<PackageReference Include="Azure.Identity" Version="1.11.3" />
 		<PackageReference Include="Azure.ResourceManager.Storage" Version="1.2.3" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.20.0" />
 		<PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.1.1" />
-		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.39.1" />
+		<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.40.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
