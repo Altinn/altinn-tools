@@ -89,7 +89,7 @@ namespace RepoCleanup
                     url = "https://altinn.studio/repos/api/v1/";
                     break;
                 case Application.Models.Environment.Local:
-                    url = "http://altinn3.no/repos/api/v1/";
+                    url = "http://studio.localhost/repos/api/v1/";
                     break;
                 default:
                     SelectEnvironment();
@@ -116,7 +116,7 @@ namespace RepoCleanup
                 case Application.Models.Environment.Production:
                     return "https://altinn.studio/repos/";
                 case Application.Models.Environment.Local:
-                    return "http://altinn3.no/repos/";
+                    return "http://studio.localhost/repos/";
             }
             
             return string.Empty;
@@ -167,7 +167,7 @@ namespace RepoCleanup
                     url = "https://altinn.studio/repos/user/settings/applications";
                     break;
                 case Application.Models.Environment.Local:
-                    url = "http://altinn3.no/repos/user/settings/applications";
+                    url = "http://studio.localhost/repos/user/settings/applications";
                     break;
             }
 
