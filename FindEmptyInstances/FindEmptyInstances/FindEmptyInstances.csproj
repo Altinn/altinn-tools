@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="Altinn.Platform.Storage.Interface" Version="4.0.1" />
-    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.44.1" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.45.0" />
   </ItemGroup>
 
 </Project>
