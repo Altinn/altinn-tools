@@ -1,12 +1,9 @@
-﻿using Azure.Storage.Queues;
+﻿using Altinn.Platform.Events.Extensions;
+using Altinn.Platform.Storage.Interface.Models;
+using Azure.Storage.Queues;
+using CloudNative.CloudEvents;
 using EventCreator.Configuration;
-using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace EventCreator.Clients;
 
@@ -15,17 +12,54 @@ namespace EventCreator.Clients;
 /// </summary>
 public class EventsQueueClient
 {
+    public const string AppResourceTemplate = "urn:altinn:resource:app_{0}";
+
     private readonly QueueStorageSettings _settings;
+    private readonly string _resourceBaseAddress;
+    private QueueClient? _registrationQueueClient;
 
-    private QueueClient _registrationQueueClient;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="EventsQueueClient"/> class.
-    /// </summary>
-    /// <param name="settings">The queue storage settings</param>
-    public EventsQueueClient(QueueStorageSettings settings)
+    public EventsQueueClient(QueueStorageSettings settings, string resourceBaseAddress)
     {
         _settings = settings;
+        _resourceBaseAddress = resourceBaseAddress;
+    }
+
+    /// <inheritdoc/>
+    public async Task AddEvent(string eventType, Instance instance)
+    {
+        string? alternativeSubject = null;
+        if (!string.IsNullOrWhiteSpace(instance.InstanceOwner.OrganisationNumber))
+        {
+            alternativeSubject = $"/org/{instance.InstanceOwner.OrganisationNumber}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(instance.InstanceOwner.PersonNumber))
+        {
+            alternativeSubject = $"/person/{instance.InstanceOwner.PersonNumber}";
+        }
+
+        var baseUrl = FormattedExternalAppBaseUrl(instance.Org, instance.AppId);
+
+        CloudEvent cloudEvent = new(CloudEventsSpecVersion.V1_0)
+        {
+            Id = Guid.NewGuid().ToString(),
+            Subject = $"/party/{instance.InstanceOwner.PartyId}",
+            Type = eventType,
+            Time = DateTime.UtcNow,
+            Source = new Uri($"{baseUrl}/instances/{instance.InstanceOwner.PartyId}/{instance.Id}"),
+        };
+
+        cloudEvent.SetAttributeFromString("resource", string.Format(AppResourceTemplate, instance.AppId.Replace('/', '_')));
+        cloudEvent.SetAttributeFromString("resourceinstance", $"{instance.InstanceOwner.PartyId}/{instance.Id}");
+
+        if (!string.IsNullOrEmpty(alternativeSubject))
+        {
+            cloudEvent.SetAttributeFromString("alternativesubject", alternativeSubject);
+        }
+
+        string serializedCloudEvent = cloudEvent.Serialize();
+
+        await EnqueueRegistration(serializedCloudEvent);
     }
 
     /// <inheritdoc/>
@@ -45,5 +79,12 @@ public class EventsQueueClient
         }
 
         return _registrationQueueClient;
+    }
+
+    private string FormattedExternalAppBaseUrl(string org, string appId)
+    {
+        string appHostUrl = string.Format(_resourceBaseAddress, org);
+        string sourceUrl = $"{appHostUrl}/{appId}";
+        return sourceUrl;
     }
 }
