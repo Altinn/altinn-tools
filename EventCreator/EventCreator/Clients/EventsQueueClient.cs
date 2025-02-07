@@ -1,30 +1,23 @@
-﻿using Altinn.Platform.Events.Extensions;
+﻿using System.Text;
+
 using Altinn.Platform.Storage.Interface.Models;
+
 using Azure.Storage.Queues;
+
 using CloudNative.CloudEvents;
 using EventCreator.Configuration;
-using System.Text;
 
 namespace EventCreator.Clients;
 
-/// <summary>
-/// Implementation of the <see ref="IEventsQueueClient"/> using Azure Storage Queues.
-/// </summary>
-public class EventsQueueClient
+public class EventsQueueClient(QueueStorageSettings settings, string resourceBaseAddress)
 {
     public const string AppResourceTemplate = "urn:altinn:resource:app_{0}";
 
-    private readonly QueueStorageSettings _settings;
-    private readonly string _resourceBaseAddress;
+    private readonly QueueStorageSettings _settings = settings;
+    private readonly string _resourceBaseAddress = resourceBaseAddress;
+
     private QueueClient? _registrationQueueClient;
 
-    public EventsQueueClient(QueueStorageSettings settings, string resourceBaseAddress)
-    {
-        _settings = settings;
-        _resourceBaseAddress = resourceBaseAddress;
-    }
-
-    /// <inheritdoc/>
     public async Task AddEvent(string eventType, Instance instance)
     {
         string? alternativeSubject = null;
@@ -62,13 +55,11 @@ public class EventsQueueClient
         await EnqueueRegistration(serializedCloudEvent);
     }
 
-    /// <inheritdoc/>
-    public async Task EnqueueRegistration(string content)
+    private async Task EnqueueRegistration(string content)
     {
         QueueClient client = await GetRegistrationQueueClient();
         await client.SendMessageAsync(Convert.ToBase64String(Encoding.UTF8.GetBytes(content)));
     }
-
 
     private async Task<QueueClient> GetRegistrationQueueClient()
     {

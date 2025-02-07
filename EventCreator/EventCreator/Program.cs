@@ -50,7 +50,7 @@ for (var i = 0; i < lines.Length; i += 1)
         continue;
     }
 
-    await eventsQueueClient.AddEvent("app.instance.process.completed", instance);
+    ////await eventsQueueClient.AddEvent("app.instance.process.completed", instance);
 
     logWriter.WriteLine($"[{DateTime.Now}]:[{line}]: Finished processing");
 }

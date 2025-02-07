@@ -1,7 +1,9 @@
-﻿using Altinn.Platform.Storage.Interface.Models;
+﻿using System.Data;
+
+using Altinn.Platform.Storage.Interface.Models;
+
 using Npgsql;
 using NpgsqlTypes;
-using System.Data;
 
 namespace EventCreator.Clients;
 
@@ -18,12 +20,9 @@ public class PgClient
         _dataSource = dataSourceBuilder.Build();
     }
 
-    /// <inheritdoc/>
     public async Task<Instance?> GetOne(Guid instanceGuid)
     {
         Instance? instance = null;
-        List<DataElement> instanceData = [];
-        long instanceInternalId = 0;
 
         await using NpgsqlCommand pgcom = _dataSource.CreateCommand(_readSqlNoElements);
 
@@ -31,15 +30,9 @@ public class PgClient
 
         await using (NpgsqlDataReader reader = await pgcom.ExecuteReaderAsync())
         {
-            bool instanceCreated = false;
             while (await reader.ReadAsync())
             {
-                if (!instanceCreated)
-                {
-                    instanceCreated = true;
-                    instance = await reader.GetFieldValueAsync<Instance>("instance");
-                    instanceInternalId = await reader.GetFieldValueAsync<long>("id");
-                }
+                instance = await reader.GetFieldValueAsync<Instance>("instance");
             }
         }
 
