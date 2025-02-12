@@ -1,9 +1,9 @@
-namespace Altinn.Platform.Storage.Configuration;
+namespace EventCreator.Configuration;
 
 /// <summary>
 /// Settings for Postgres database
 /// </summary>
-public class PostgreSqlSettings
+public class StorageDbSettings
 {
     /// <summary>
     /// Connection string for the postgres db

@@ -1,6 +1,4 @@
 ﻿using System.Reflection;
-
-using Altinn.Platform.Storage.Configuration;
 using Altinn.Platform.Storage.Interface.Models;
 
 using EventCreator.Clients;
@@ -18,14 +16,14 @@ var config = builder.Build();
 QueueStorageSettings queueStorageSettings = new();
 config.GetRequiredSection("QueueStorageSettings").Bind(queueStorageSettings);
 
-PostgreSqlSettings postgreSqlSettings = new();
-config.GetRequiredSection("PostgreSqlSettings").Bind(postgreSqlSettings);
+StorageDbSettings storageDbSettings = new();
+config.GetRequiredSection("StorageDbSettings").Bind(storageDbSettings);
 
 GeneralSettings generalSettings = new();
 config.GetRequiredSection("GeneralSettings").Bind(generalSettings);
 
 EventsQueueClient eventsQueueClient = new EventsQueueClient(queueStorageSettings, generalSettings.SourceBaseAddress);
-PgClient pgClient = new PgClient(postgreSqlSettings.ConnectionString);
+PgClient pgClient = new PgClient(storageDbSettings.ConnectionString);
 
 using FileStream logStream = File.OpenWrite("log.txt");
 using StreamWriter logWriter = new StreamWriter(logStream);
