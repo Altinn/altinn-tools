@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Queues" Version="12.21.0" />
-    <PackageReference Include="Altinn.Platform.Storage.Interface" Version="4.0.4" />
+    <PackageReference Include="Altinn.Platform.Storage.Interface" Version="4.0.6" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.json" Version="9.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.1" />
