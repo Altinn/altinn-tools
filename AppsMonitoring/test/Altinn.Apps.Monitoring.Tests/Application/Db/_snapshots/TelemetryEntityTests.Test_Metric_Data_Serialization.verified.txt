@@ -1,0 +1,10 @@
+﻿{
+  $type: metric,
+  name: metric-name,
+  value: 42,
+  attributes: {
+    key1: value1,
+    key2: value2
+  },
+  altinn_error_id: -1
+}

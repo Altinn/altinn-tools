@@ -1,0 +1,6 @@
+@Altinn.Apps.Monitoring_HostAddress = http://localhost:5156
+
+GET {{Altinn.Apps.Monitoring_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

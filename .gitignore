@@ -356,3 +356,6 @@ RepoCleanup/.idea/**
 
 FindEventDeliveryErrors/data/**
 FindEventDeliveryErrors/.env
+
+AppsMonitoring/**/appsettings.Secret.json
+AppsMonitoring/src/**/data/data.db

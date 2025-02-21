@@ -1,0 +1,28 @@
+services:
+  altinn_apps_monitoring_postgres:
+    image: postgres:16
+    container_name: monitoring_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=platform_monitoring_admin
+      - POSTGRES_PASSWORD=Password
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./infra/postgres_init.sql:/docker-entrypoint-initdb.d/postgres_init.sql
+
+  altinn_apps_monitoring_pgadmin:
+    image: dpage/pgadmin4
+    container_name: monitoring_pgadmin
+    restart: unless-stopped
+    networks:
+      - altinnplatform_network
+    ports:
+      - '8888:80'
+    environment:
+      PGADMIN_DEFAULT_EMAIL: platform_monitoring_admin@altinn.no
+      PGADMIN_DEFAULT_PASSWORD: Password
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    volumes:
+      - ./infra/servers.json:/pgadmin4/servers.json
