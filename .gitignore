@@ -356,3 +356,5 @@ RepoCleanup/.idea/**
 
 FindEventDeliveryErrors/data/**
 FindEventDeliveryErrors/.env
+
+AppsAnalysis/config.ini
