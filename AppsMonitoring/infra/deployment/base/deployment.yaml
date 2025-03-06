@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apps-monitor
+spec:
+  minReadySeconds: 3
+  revisionHistoryLimit: 5
+  progressDeadlineSeconds: 60
+  # We use a single replica and Recreate strategy since this is a stateful application
+  replicas: 1
+  strategy:
+    # Recreate means all existing pods (1) are killed before new ones are created
+    type: Recreate
+  selector:
+    matchLabels:
+      app: apps-monitor
+  template:
+    metadata:
+      labels:
+        app: apps-monitor
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: apps-monitor
+      # .NET docker images run with '1654', can verify with
+      # docker image inspect mcr.microsoft.com/dotnet/aspnet:9.0-noble-chiseled-extra
+      # Which is what we use in the Dockerfile
+      securityContext:
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        runAsNonRoot: true
+      containers:
+        - name: apps-monitor
+          image: altinntjenesterregistry.azurecr.io/altinn-apps-monitor:latest
+          imagePullPolicy: Always
+        #   securityContext:
+        #     allowPrivilegeEscalation: false
+        #     readOnlyRootFilesystem: true
+        #     privileged: false
+        #     capabilities:
+        #       drop:
+        #         - ALL
+          ports:
+            - name: http
+              containerPort: 5156
+              protocol: TCP
+          env:
+            - name: ASPNETCORE_URLS
+              value: http://*:5156
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 5156
+            initialDelaySeconds: 5
+            periodSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 5156
+            initialDelaySeconds: 5
+            periodSeconds: 3
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: appsettings
+              readOnly: true
+              # Must mount to subfolder of app,
+              # otherwise the volume mount will overwrite everything there
+              mountPath: "/app/config"
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: appsettings
+          secret:
+            secretName: apps-monitor-appsettings

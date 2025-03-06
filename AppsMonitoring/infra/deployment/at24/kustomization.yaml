@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: apps-monitor
+resources:
+  - ../base
+patches:
+  - path: env.yaml
+  - path: serviceaccount.yaml
+secretGenerator:
+- name: apps-monitor-appsettings
+  files:
+  - appsettings.Secret.json
+generatorOptions:
+  disableNameSuffixHash: true

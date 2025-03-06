@@ -1,0 +1,95 @@
+﻿{
+  Telemetry: [
+    {
+      Id: 1,
+      ExtId: 75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c1,
+      ServiceOwner: skd,
+      AppName: formueinntekt-skattemelding-v2,
+      AppVersion: 8.0.8,
+      TimeGenerated: 2025-02-15T14:51:04.906736Z,
+      TimeIngested: 2025-02-19T07:34:32.420042Z,
+      Seeded: true,
+      Data: {
+        InstanceOwnerPartyId: 123,
+        InstanceId: Guid_1,
+        TraceId: Guid_2,
+        SpanId: 90c159bde9b1a6c1,
+        ParentSpanId: 7e7143a41c29e532,
+        TraceName: PUT Process/NextElement [app/instanceGuid/instanceOwnerPartyId/org],
+        SpanName: POST /storage/api/v1/instances/123/1d449be1-7114-405c-aeee-1f09799f7b74/events,
+        Success: false,
+        Result: Faulted,
+        Duration: 0:00:00:27.478494,
+        Attributes: {
+          Data: https://platform.altinn.no/storage/api/v1/instances/123/1d449be1-7114-405c-aeee-1f09799f7b74/events,
+          DependencyType: HTTP,
+          PerformanceBucket: 15sec-30sec,
+          Properties: {"AspNetCoreEnvironment":"Production","_MS.ProcessedByMetricExtractors":"(Name:'Dependencies', Ver:'1.1')"},
+          Target: platform.altinn.no
+        },
+        AltinnErrorId: 1
+      }
+    },
+    {
+      Id: 2,
+      ExtId: 4ba19e3f5a545728934b1f921e06d92b-f86a2aed5c5d9f63,
+      ServiceOwner: tad,
+      AppName: bku,
+      AppVersion: 6.0.35,
+      TimeGenerated: 2025-02-19T08:29:04.386517Z,
+      TimeIngested: 2025-02-19T08:34:32.406732Z,
+      Seeded: true,
+      Data: {
+        InstanceOwnerPartyId: 123,
+        InstanceId: Guid_1,
+        TraceId: Guid_3,
+        SpanId: f86a2aed5c5d9f63,
+        ParentSpanId: e962c6c0f02d5dde,
+        TraceName: PUT Process/NextElement [app/instanceGuid/instanceOwnerPartyId/org],
+        SpanName: POST /events/api/v1/app,
+        Success: false,
+        Result: Faulted,
+        Duration: 0:00:00:27.804053,
+        Attributes: {
+          Data: https://platform.altinn.no/events/api/v1/app,
+          DependencyType: HTTP,
+          PerformanceBucket: 15sec-30sec,
+          Properties: {"AspNetCoreEnvironment":"Production","_MS.ProcessedByMetricExtractors":"(Name:'Dependencies', Ver:'1.1')"},
+          Target: platform.altinn.no
+        },
+        AltinnErrorId: 2
+      }
+    },
+    {
+      Id: 3,
+      ExtId: f2b6eea456788828f6195fbce59f740f-e0135dfc441dc49a,
+      ServiceOwner: ssb,
+      AppName: ra1000-01,
+      AppVersion: 6.0.26,
+      TimeGenerated: 2025-02-19T16:07:44.720544Z,
+      TimeIngested: 2025-02-19T16:00:13.785543Z,
+      Seeded: true,
+      Data: {
+        InstanceOwnerPartyId: 123,
+        InstanceId: Guid_1,
+        TraceId: Guid_4,
+        SpanId: e0135dfc441dc49a,
+        ParentSpanId: e37e123015737cb8,
+        TraceName: PUT Process/NextElement [app/instanceGuid/instanceOwnerPartyId/org],
+        SpanName: POST /events/api/v1/app,
+        Success: false,
+        Result: Faulted,
+        Duration: 0:00:00:26.8139518,
+        Attributes: {
+          Data: https://platform.altinn.no/events/api/v1/app,
+          DependencyType: HTTP,
+          PerformanceBucket: 15sec-30sec,
+          Properties: {"AspNetCoreEnvironment":"Production","_MS.ProcessedByMetricExtractors":"(Name:'Dependencies', Ver:'1.1')"},
+          Target: platform.altinn.no
+        },
+        AltinnErrorId: 2
+      }
+    }
+  ],
+  QueryStates: []
+}
