@@ -5,18 +5,42 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FindEventDeliveryErrors", "FindEventDeliveryErrors\FindEventDeliveryErrors.csproj", "{DA92650C-BE31-464C-A883-CC63C7A249F6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AppsMonitoring", "AppsMonitoring", "{908DEDBC-2BD0-45F9-9413-E22FABD4FB33}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B853976B-7964-4FCF-961B-14BD8A1E0CF9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Apps.Monitoring", "AppsMonitoring\src\Altinn.Apps.Monitoring\Altinn.Apps.Monitoring.csproj", "{808CA16E-4CE1-416D-8CEC-4105AECC2225}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{BCA45CBB-515E-4D16-B8FD-8F8313BA2765}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Altinn.Apps.Monitoring.Tests", "AppsMonitoring\test\Altinn.Apps.Monitoring.Tests\Altinn.Apps.Monitoring.Tests.csproj", "{D57DB076-5350-4148-847D-2F683A8D38BA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{DA92650C-BE31-464C-A883-CC63C7A249F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DA92650C-BE31-464C-A883-CC63C7A249F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA92650C-BE31-464C-A883-CC63C7A249F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DA92650C-BE31-464C-A883-CC63C7A249F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{808CA16E-4CE1-416D-8CEC-4105AECC2225}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{808CA16E-4CE1-416D-8CEC-4105AECC2225}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{808CA16E-4CE1-416D-8CEC-4105AECC2225}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{808CA16E-4CE1-416D-8CEC-4105AECC2225}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D57DB076-5350-4148-847D-2F683A8D38BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D57DB076-5350-4148-847D-2F683A8D38BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D57DB076-5350-4148-847D-2F683A8D38BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D57DB076-5350-4148-847D-2F683A8D38BA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B853976B-7964-4FCF-961B-14BD8A1E0CF9} = {908DEDBC-2BD0-45F9-9413-E22FABD4FB33}
+		{808CA16E-4CE1-416D-8CEC-4105AECC2225} = {B853976B-7964-4FCF-961B-14BD8A1E0CF9}
+		{BCA45CBB-515E-4D16-B8FD-8F8313BA2765} = {908DEDBC-2BD0-45F9-9413-E22FABD4FB33}
+		{D57DB076-5350-4148-847D-2F683A8D38BA} = {BCA45CBB-515E-4D16-B8FD-8F8313BA2765}
 	EndGlobalSection
 EndGlobal
