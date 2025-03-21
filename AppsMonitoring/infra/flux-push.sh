@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Runs flux push
+# Needs to have logged into ACR:
+#   az acr login --name altinntjenesterregistry
+# ./flus-push.sh
+
+f() {
+    cd deployment/
+    flux push artifact oci://altinntjenesterregistry.azurecr.io/configs/apps-monitor:$(git rev-parse --short HEAD) \
+        --provider=generic \
+        --reproducible \
+        --path="." \
+        --source="$(git config --get remote.origin.url)" \
+        --revision="$(git branch --show-current)/$(git rev-parse HEAD)"
+    flux tag artifact oci://altinntjenesterregistry.azurecr.io/configs/apps-monitor:$(git rev-parse --short HEAD) \
+        --provider=generic \
+        --tag at24
+
+    # The source is created in Terraform, we just refer to it here
+    flux reconcile source oci -n apps-monitor apps-monitor
+}
+
+(set -e; f)

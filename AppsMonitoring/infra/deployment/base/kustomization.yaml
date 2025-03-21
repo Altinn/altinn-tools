@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+replacements:
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.[altinn.no/image]
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.[name=apps-monitor].image
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.[altinn.no/image-tag]
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.[name=apps-monitor].env.[name=K8S_CONTAINER_IMAGE_TAG].value

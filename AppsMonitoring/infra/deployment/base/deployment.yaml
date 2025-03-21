@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apps-monitor
+  annotations:
+    altinn.no/image: altinntjenesterregistry.azurecr.io/altinn-apps-monitor:latest
+    altinn.no/image-tag: latest
+spec:
+  minReadySeconds: 3
+  revisionHistoryLimit: 5
+  progressDeadlineSeconds: 60
+  # We use a single replica and Recreate strategy since this is a stateful application
+  replicas: 1
+  strategy:
+    # Recreate means all existing pods (1) are killed before new ones are created
+    type: Recreate
+  selector:
+    matchLabels:
+      app: apps-monitor
+  template:
+    metadata:
+      labels:
+        app: apps-monitor
+        # We use workload identity, but service account is created through Terraform
+        azure.workload.identity/use: "true"
+      annotations:
+        linkerd.io/inject: enabled
+    spec:
+      serviceAccountName: apps-monitor-sa
+      # .NET docker images run with '1654', can verify with
+      # docker image inspect mcr.microsoft.com/dotnet/aspnet:9.0-noble-chiseled-extra
+      # Which is what we use in the Dockerfile
+      securityContext:
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        runAsNonRoot: true
+      containers:
+        - name: apps-monitor
+          image: ""
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 5156
+              protocol: TCP
+          env:
+            - name: ASPNETCORE_URLS
+              value: http://*:5156
+            - name: AppConfiguration__KeyVaultUri
+              valueFrom:
+                secretKeyRef:
+                  name: apps-monitor-kvconfig
+                  key: keyvault_uri
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.monitoring.svc.cluster.local:4317
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+            - name: OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY
+              value: disk
+            - name: OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH
+              value: /telemetry
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: K8S_NAMESPACE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: K8S_POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: K8S_CONTAINER_IMAGE_TAG
+              value: ""
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "k8s.node.name=$(K8S_NODE_NAME),\
+                k8s.namespace.name=$(K8S_NAMESPACE_NAME),\
+                k8s.pod.name=$(K8S_POD_NAME),\
+                k8s.pod.uid=$(K8S_POD_UID),\
+                service.namespace=altinn,\
+                service.name=apps-monitor,\
+                service.instance.id=$(K8S_POD_NAME),\
+                service.version=$(K8S_CONTAINER_IMAGE_TAG)"
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 5156
+            initialDelaySeconds: 5
+            periodSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 5156
+            initialDelaySeconds: 5
+            periodSeconds: 3
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: telemetry
+              mountPath: /telemetry
+      volumes:
+        - name: telemetry
+          emptyDir:
+            sizeLimit: 128Mi
