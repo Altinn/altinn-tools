@@ -88,9 +88,9 @@ var tasks = subscriptions.Select(async subscription =>
         .Where(e => e.ServiceOwner == serviceOwner)
         .OrderByDescending(e => e.TimeGenerated)
         .FirstOrDefaultAsync();
-    var searchFrom = lastError is not null ? 
-                lastError.TimeGenerated : 
-                DateTimeOffset.UtcNow.Subtract(TimeSpan.FromDays(SearchFromDays)).AddSeconds(-1);
+    
+    var searchFrom = lastError is not null ? lastError.TimeGenerated : DateTimeOffset.UtcNow.Subtract(TimeSpan.FromDays(SearchFromDays)).AddSeconds(-1);
+
     AnsiConsole.MarkupLine( $"([bold]{serviceOwner}[/]) - initializing search from [blue]{searchFrom.UtcDateTime:o}[/]");
 
     var client = new LogsQueryClient(new AzureCliCredential());
@@ -98,7 +98,7 @@ var tasks = subscriptions.Select(async subscription =>
     var timer = new PeriodicTimer(PollInterval);
     do 
     {
-        var searchTimestamp = DateTimeOffset.UtcNow;
+        var searchTimestamp = DateTimeOffset.UtcNow.AddMinutes(-10);
         var timeRange = searchTimestamp - searchFrom + TimeSpan.FromMinutes(5);
         AnsiConsole.MarkupLine( $"([bold]{serviceOwner}[/]) - searching from [blue]{searchFrom.UtcDateTime:o}[/] to [blue]{searchTimestamp.UtcDateTime:o}[/] (range {timeRange})");
 

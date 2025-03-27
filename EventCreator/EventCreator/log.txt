@@ -1,0 +1,5 @@
+[14.03.2025 16.00.48]: STARTING, reading instances.txt
+[14.03.2025 16.00.48]:[d8cf5bb9-81a9-4ac4-8834-ea97e9a5af75]: Started processing, reading from Storage
+[14.03.2025 16.00.49]:[d8cf5bb9-81a9-4ac4-8834-ea97e9a5af75]: Instance FOUND, generating and sending event
+[14.03.2025 16.00.49]:[d8cf5bb9-81a9-4ac4-8834-ea97e9a5af75]: Finished processing
+[14.03.2025 16.00.49]: Finished processing
