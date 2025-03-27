@@ -14,12 +14,12 @@
 
   <ItemGroup>
     <PackageReference Include="Altinn.Platform.Storage.Interface" Version="4.0.7" />
-    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.47.2" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.48.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
-    <PackageReference Include="Npgsql" Version="7.0.9" />
+    <PackageReference Include="Npgsql" Version="7.0.10" />
   </ItemGroup>
 
   <ItemGroup>
