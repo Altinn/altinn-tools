@@ -1,0 +1,96 @@
+﻿[
+  {
+    Desc: Iteration 1 - generator=Empty,
+    Start: 2025-01-01T12:00:00Z,
+    End: 2025-01-01T12:00:05Z,
+    StateBefore: {
+      Telemetry: [],
+      Queries: []
+    },
+    Input: {
+      ReportedEvents: [
+        {
+          ServiceOwner: {
+            Value: one
+          },
+          Query: {
+            Name: query,
+            Type: Traces,
+            QueryTemplate: template-{searchFrom}-{searchTo},
+            Hash: HpynynzeF9Pk52Vahp477Q==
+          },
+          SearchFrom: 2024-10-03T11:59:59Z,
+          SearchTo: 2025-01-01T11:50:00Z,
+          Telemetry: [],
+          Result: {
+            Ids: [],
+            DupeExtIds: []
+          }
+        }
+      ]
+    },
+    StateAfter: {
+      Telemetry: [],
+      Queries: [
+        {
+          Id: 1,
+          ServiceOwner: one,
+          Name: query,
+          Hash: HpynynzeF9Pk52Vahp477Q==,
+          QueriedUntil: 2025-01-01T11:50:00Z
+        }
+      ]
+    }
+  },
+  {
+    Desc: Iteration 2 - generator=Empty,
+    Start: 2025-01-01T12:10:00Z,
+    End: 2025-01-01T12:10:05Z,
+    StateBefore: {
+      Telemetry: [],
+      Queries: [
+        {
+          Id: 1,
+          ServiceOwner: one,
+          Name: query,
+          Hash: HpynynzeF9Pk52Vahp477Q==,
+          QueriedUntil: 2025-01-01T11:50:00Z
+        }
+      ]
+    },
+    Input: {
+      ReportedEvents: [
+        {
+          ServiceOwner: {
+            Value: one
+          },
+          Query: {
+            Name: query,
+            Type: Traces,
+            QueryTemplate: template-{searchFrom}-{searchTo},
+            Hash: HpynynzeF9Pk52Vahp477Q==
+          },
+          SearchFrom: 2025-01-01T11:50:00Z,
+          SearchTo: 2025-01-01T12:00:00Z,
+          Telemetry: [],
+          Result: {
+            Ids: [],
+            DupeExtIds: []
+          }
+        }
+      ]
+    },
+    StateAfter: {
+      Telemetry: [],
+      Queries: [
+        {
+          Id: 1,
+          ServiceOwner: one,
+          Name: query,
+          Hash: HpynynzeF9Pk52Vahp477Q==,
+          QueriedUntil: 2025-01-01T12:00:00Z
+        }
+      ]
+    }
+  }
+]

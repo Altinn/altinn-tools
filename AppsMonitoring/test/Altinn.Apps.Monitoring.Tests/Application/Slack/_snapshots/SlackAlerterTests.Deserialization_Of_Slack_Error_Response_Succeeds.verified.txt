@@ -1,0 +1,4 @@
+﻿{
+  Error: Something went wrong,
+  Ok: false
+}

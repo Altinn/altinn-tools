@@ -1,0 +1,5 @@
+**/bin/
+**/obj/
+.config/
+infra/
+**/appsettings.Secret.json

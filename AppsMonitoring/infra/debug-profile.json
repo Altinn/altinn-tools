@@ -1,0 +1,9 @@
+{
+    "volumeMounts": [
+        {
+            "mountPath": "/telemetry",
+            "name": "telemetry",
+            "readOnly": true
+        }
+    ]
+}

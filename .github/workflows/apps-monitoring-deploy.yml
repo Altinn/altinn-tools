@@ -1,0 +1,68 @@
+name: Apps.Monitoring deploy
+
+on:
+  push:
+    paths:
+      - AppsMonitoring/**
+    branches:
+      - main
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./AppsMonitoring
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: set image tag
+        id: vars
+        run: |
+          echo "registry=altinntjenesterregistry.azurecr.io" >> $GITHUB_OUTPUT
+          echo "image=altinntjenesterregistry.azurecr.io/altinn-apps-monitor:$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "image_tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      # TODO: az login
+
+      - name: docker build
+        run: docker build -t ${{ steps.vars.outputs.image }} -f src/Altinn.Apps.Monitoring/Dockerfile .
+
+      - name: scan image
+        uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5 # 0.30.0
+        with:
+          image-ref: '${{ steps.vars.outputs.image }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: push image
+        run: docker push ${{ steps.vars.outputs.image }}
+
+      - name: yq install
+        uses: mikefarah/yq@8bf425b4d1344db7cd469a8d10a390876e0c77fd # v4.45.1
+
+      - name: patch base with image tag
+        run: |
+          export APP_IMAGE="${{ steps.vars.outputs.image }}"
+          export APP_IMAGE_TAG="${{ steps.vars.outputs.image_tag }}"
+          yq -i '.metadata.annotations["altinn.no/image"] = env(APP_IMAGE)' infra/deployment/base/deployment.yaml
+          yq -i '.metadata.annotations["altinn.no/image-tag"] = env(APP_IMAGE_TAG)' infra/deployment/base/deployment.yaml
+
+      - name: push deployment
+        run: |
+          flux push artifact oci://${{ steps.vars.outputs.registry }}/configs/apps-monitor:${{ steps.vars.outputs.image_tag }} \
+              --provider=generic \
+              --reproducible \
+              --path="." \
+              --source="$(git config --get remote.origin.url)" \
+              --revision="$(git branch --show-current)/${{ steps.vars.outputs.image_tag }}"
+          flux tag artifact oci://${{ steps.vars.outputs.registry }}/configs/apps-monitor:${{ steps.vars.outputs.image_tag }} \
+              --provider=generic \
+              --tag at24

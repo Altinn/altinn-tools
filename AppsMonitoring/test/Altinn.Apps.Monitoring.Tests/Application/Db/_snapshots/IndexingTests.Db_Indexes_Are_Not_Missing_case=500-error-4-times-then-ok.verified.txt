@@ -1,0 +1,30 @@
+﻿[
+  {
+    TableName: telemetry,
+    TooMuchSeq: 6,
+    Result: Missing Index?,
+    TableRelSize: 8192,
+    SeqScan: 8,
+    IndexScan: 2
+  },
+  {
+    TableName: alerts,
+    TooMuchSeq: 5,
+    Result: Missing Index?,
+    TableRelSize: 8192,
+    SeqScan: 5
+  },
+  {
+    TableName: queries,
+    TooMuchSeq: 1,
+    Result: Missing Index?,
+    TableRelSize: 8192,
+    SeqScan: 3,
+    IndexScan: 2
+  },
+  {
+    TableName: schema_version,
+    Result: OK,
+    TableRelSize: 8192
+  }
+]
