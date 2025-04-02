@@ -1,0 +1,18 @@
+﻿{
+  $type: trace,
+  instance_owner_party_id: 2,
+  instance_id: Guid_1,
+  trace_id: trace-id,
+  span_id: span-id,
+  parent_span_id: parent-span-id,
+  trace_name: trace-name,
+  span_name: span-name,
+  success: false,
+  result: result,
+  duration: 0:00:00.1,
+  attributes: {
+    key1: value1,
+    key2: value2
+  },
+  altinn_error_id: 1
+}

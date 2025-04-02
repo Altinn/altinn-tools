@@ -1,0 +1,152 @@
+﻿[
+  {
+    Desc: Iteration 1 - generator=WithSeeder,
+    Start: 2025-02-20T12:00:00Z,
+    End: 2025-02-20T12:00:05Z,
+    StateBefore: {
+      Telemetry: [
+        {
+          Id: 1,
+          ExtId: 75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c1,
+          ServiceOwner: skd,
+          AppName: formueinntekt-skattemelding-v2,
+          AppVersion: 8.0.8,
+          TimeGenerated: 2025-02-15T14:51:04.906736Z,
+          TimeIngested: 2025-02-19T07:34:32.420042Z,
+          Seeded: true,
+          Data: {Scrubbed}
+        },
+        {
+          Id: 2,
+          ExtId: 4ba19e3f5a545728934b1f921e06d92b-f86a2aed5c5d9f63,
+          ServiceOwner: tad,
+          AppName: bku,
+          AppVersion: 6.0.35,
+          TimeGenerated: 2025-02-19T08:29:04.386517Z,
+          TimeIngested: 2025-02-19T08:34:32.406732Z,
+          Seeded: true,
+          Data: {Scrubbed}
+        },
+        {
+          Id: 3,
+          ExtId: f2b6eea456788828f6195fbce59f740f-e0135dfc441dc49a,
+          ServiceOwner: ssb,
+          AppName: ra1000-01,
+          AppVersion: 6.0.26,
+          TimeGenerated: 2025-02-19T16:07:44.720544Z,
+          TimeIngested: 2025-02-19T16:00:13.785543Z,
+          Seeded: true,
+          Data: {Scrubbed}
+        }
+      ],
+      Queries: []
+    },
+    Input: {
+      ReportedEvents: [
+        {
+          ServiceOwner: {
+            Value: skd
+          },
+          Query: {
+            Name: query,
+            Type: Traces,
+            QueryTemplate: template-{searchFrom}-{searchTo},
+            Hash: HpynynzeF9Pk52Vahp477Q==
+          },
+          SearchFrom: 2024-11-22T11:59:59Z,
+          SearchTo: 2025-02-20T11:50:00Z,
+          Telemetry: [
+            {
+              ExtId: 75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c1,
+              ServiceOwner: skd,
+              AppName: formueinntekt-skattemelding-v2,
+              AppVersion: 8.0.8,
+              TimeGenerated: 2025-02-15T14:51:04.906736Z,
+              TimeIngested: 2025-02-20T12:00:05Z,
+              Seeded: false,
+              Data: {Scrubbed}
+            },
+            {
+              ExtId: 75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c2,
+              ServiceOwner: skd,
+              AppName: formueinntekt-skattemelding-v2,
+              AppVersion: 8.0.8,
+              TimeGenerated: 2025-02-15T14:56:04.906736Z,
+              TimeIngested: 2025-02-20T12:00:05Z,
+              Seeded: false,
+              Data: {Scrubbed}
+            }
+          ],
+          Result: {
+            Written: 1,
+            Ids: [
+              1,
+              5
+            ],
+            DupeExtIds: [
+              75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c1
+            ]
+          }
+        }
+      ]
+    },
+    StateAfter: {
+      Telemetry: [
+        {
+          Id: 2,
+          ExtId: 4ba19e3f5a545728934b1f921e06d92b-f86a2aed5c5d9f63,
+          ServiceOwner: tad,
+          AppName: bku,
+          AppVersion: 6.0.35,
+          TimeGenerated: 2025-02-19T08:29:04.386517Z,
+          TimeIngested: 2025-02-19T08:34:32.406732Z,
+          Seeded: true,
+          Data: {Scrubbed}
+        },
+        {
+          Id: 3,
+          ExtId: f2b6eea456788828f6195fbce59f740f-e0135dfc441dc49a,
+          ServiceOwner: ssb,
+          AppName: ra1000-01,
+          AppVersion: 6.0.26,
+          TimeGenerated: 2025-02-19T16:07:44.720544Z,
+          TimeIngested: 2025-02-19T16:00:13.785543Z,
+          Seeded: true,
+          Data: {Scrubbed}
+        },
+        {
+          Id: 1,
+          ExtId: 75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c1,
+          ServiceOwner: skd,
+          AppName: formueinntekt-skattemelding-v2,
+          AppVersion: 8.0.8,
+          TimeGenerated: 2025-02-15T14:51:04.906736Z,
+          TimeIngested: 2025-02-19T07:34:32.420042Z,
+          DupeCount: 1,
+          Seeded: true,
+          Data: {Scrubbed}
+        },
+        {
+          Id: 5,
+          ExtId: 75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c2,
+          ServiceOwner: skd,
+          AppName: formueinntekt-skattemelding-v2,
+          AppVersion: 8.0.8,
+          TimeGenerated: 2025-02-15T14:56:04.906736Z,
+          TimeIngested: 2025-02-20T12:00:05Z,
+          Seeded: false,
+          Data: {Scrubbed}
+        }
+      ],
+      Queries: [
+        {
+          Id: 1,
+          ServiceOwner: skd,
+          Name: query,
+          Hash: HpynynzeF9Pk52Vahp477Q==,
+          QueriedUntil: 2025-02-15T14:56:04.906736Z
+        }
+      ]
+    }
+  }
+]

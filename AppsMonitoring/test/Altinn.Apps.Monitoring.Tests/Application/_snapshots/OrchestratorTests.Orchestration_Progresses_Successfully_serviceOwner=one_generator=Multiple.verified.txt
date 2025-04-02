@@ -1,0 +1,237 @@
+﻿[
+  {
+    Desc: Iteration 1 - generator=Multiple,
+    Start: 2025-01-01T12:00:00Z,
+    End: 2025-01-01T12:00:05Z,
+    StateBefore: {
+      Telemetry: [],
+      Queries: []
+    },
+    Input: {
+      ReportedEvents: [
+        {
+          ServiceOwner: {
+            Value: one
+          },
+          Query: {
+            Name: query,
+            Type: Traces,
+            QueryTemplate: template-{searchFrom}-{searchTo},
+            Hash: HpynynzeF9Pk52Vahp477Q==
+          },
+          SearchFrom: 2024-10-03T11:59:59Z,
+          SearchTo: 2025-01-01T11:50:00Z,
+          Telemetry: [
+            {
+              ExtId: 1,
+              ServiceOwner: one,
+              AppName: app-name,
+              AppVersion: 8.0.0,
+              TimeGenerated: 2024-10-03T12:00:00Z,
+              TimeIngested: 2025-01-01T12:00:05Z,
+              Seeded: false,
+              Data: {Scrubbed}
+            },
+            {
+              ExtId: 2,
+              ServiceOwner: one,
+              AppName: app-name,
+              AppVersion: 8.0.0,
+              TimeGenerated: 2025-01-01T11:50:00Z,
+              TimeIngested: 2025-01-01T12:00:05Z,
+              Seeded: false,
+              Data: {Scrubbed}
+            }
+          ],
+          Result: {
+            Written: 2,
+            Ids: [
+              1,
+              2
+            ],
+            DupeExtIds: []
+          }
+        }
+      ]
+    },
+    StateAfter: {
+      Telemetry: [
+        {
+          Id: 1,
+          ExtId: 1,
+          ServiceOwner: one,
+          AppName: app-name,
+          AppVersion: 8.0.0,
+          TimeGenerated: 2024-10-03T12:00:00Z,
+          TimeIngested: 2025-01-01T12:00:05Z,
+          Seeded: false,
+          Data: {Scrubbed}
+        },
+        {
+          Id: 2,
+          ExtId: 2,
+          ServiceOwner: one,
+          AppName: app-name,
+          AppVersion: 8.0.0,
+          TimeGenerated: 2025-01-01T11:50:00Z,
+          TimeIngested: 2025-01-01T12:00:05Z,
+          Seeded: false,
+          Data: {Scrubbed}
+        }
+      ],
+      Queries: [
+        {
+          Id: 1,
+          ServiceOwner: one,
+          Name: query,
+          Hash: HpynynzeF9Pk52Vahp477Q==,
+          QueriedUntil: 2025-01-01T11:50:00Z
+        }
+      ]
+    }
+  },
+  {
+    Desc: Iteration 2 - generator=Multiple,
+    Start: 2025-01-01T12:10:00Z,
+    End: 2025-01-01T12:10:05Z,
+    StateBefore: {
+      Telemetry: [
+        {
+          Id: 1,
+          ExtId: 1,
+          ServiceOwner: one,
+          AppName: app-name,
+          AppVersion: 8.0.0,
+          TimeGenerated: 2024-10-03T12:00:00Z,
+          TimeIngested: 2025-01-01T12:00:05Z,
+          Seeded: false,
+          Data: {Scrubbed}
+        },
+        {
+          Id: 2,
+          ExtId: 2,
+          ServiceOwner: one,
+          AppName: app-name,
+          AppVersion: 8.0.0,
+          TimeGenerated: 2025-01-01T11:50:00Z,
+          TimeIngested: 2025-01-01T12:00:05Z,
+          Seeded: false,
+          Data: {Scrubbed}
+        }
+      ],
+      Queries: [
+        {
+          Id: 1,
+          ServiceOwner: one,
+          Name: query,
+          Hash: HpynynzeF9Pk52Vahp477Q==,
+          QueriedUntil: 2025-01-01T11:50:00Z
+        }
+      ]
+    },
+    Input: {
+      ReportedEvents: [
+        {
+          ServiceOwner: {
+            Value: one
+          },
+          Query: {
+            Name: query,
+            Type: Traces,
+            QueryTemplate: template-{searchFrom}-{searchTo},
+            Hash: HpynynzeF9Pk52Vahp477Q==
+          },
+          SearchFrom: 2025-01-01T11:50:00Z,
+          SearchTo: 2025-01-01T12:00:00Z,
+          Telemetry: [
+            {
+              ExtId: 3,
+              ServiceOwner: one,
+              AppName: app-name,
+              AppVersion: 8.0.0,
+              TimeGenerated: 2025-01-01T11:50:01Z,
+              TimeIngested: 2025-01-01T12:10:05Z,
+              Seeded: false,
+              Data: {Scrubbed}
+            },
+            {
+              ExtId: 4,
+              ServiceOwner: one,
+              AppName: app-name,
+              AppVersion: 8.0.0,
+              TimeGenerated: 2025-01-01T12:00:00Z,
+              TimeIngested: 2025-01-01T12:10:05Z,
+              Seeded: false,
+              Data: {Scrubbed}
+            }
+          ],
+          Result: {
+            Written: 2,
+            Ids: [
+              3,
+              4
+            ],
+            DupeExtIds: []
+          }
+        }
+      ]
+    },
+    StateAfter: {
+      Telemetry: [
+        {
+          Id: 1,
+          ExtId: 1,
+          ServiceOwner: one,
+          AppName: app-name,
+          AppVersion: 8.0.0,
+          TimeGenerated: 2024-10-03T12:00:00Z,
+          TimeIngested: 2025-01-01T12:00:05Z,
+          Seeded: false,
+          Data: {Scrubbed}
+        },
+        {
+          Id: 2,
+          ExtId: 2,
+          ServiceOwner: one,
+          AppName: app-name,
+          AppVersion: 8.0.0,
+          TimeGenerated: 2025-01-01T11:50:00Z,
+          TimeIngested: 2025-01-01T12:00:05Z,
+          Seeded: false,
+          Data: {Scrubbed}
+        },
+        {
+          Id: 3,
+          ExtId: 3,
+          ServiceOwner: one,
+          AppName: app-name,
+          AppVersion: 8.0.0,
+          TimeGenerated: 2025-01-01T11:50:01Z,
+          TimeIngested: 2025-01-01T12:10:05Z,
+          Seeded: false,
+          Data: {Scrubbed}
+        },
+        {
+          Id: 4,
+          ExtId: 4,
+          ServiceOwner: one,
+          AppName: app-name,
+          AppVersion: 8.0.0,
+          TimeGenerated: 2025-01-01T12:00:00Z,
+          TimeIngested: 2025-01-01T12:10:05Z,
+          Seeded: false,
+          Data: {Scrubbed}
+        }
+      ],
+      Queries: [
+        {
+          Id: 1,
+          ServiceOwner: one,
+          Name: query,
+          Hash: HpynynzeF9Pk52Vahp477Q==,
+          QueriedUntil: 2025-01-01T12:00:00Z
+        }
+      ]
+    }
+  }
+]

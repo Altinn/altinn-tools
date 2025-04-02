@@ -1,0 +1,83 @@
+name: Apps.Monitoring promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: "Environment to promote from"
+        type: choice
+        default: "at24"
+        required: true
+        options:
+          - at24
+          - tt02
+      to:
+        description: "Environment to promote to"
+        type: choice
+        default: "tt02"
+        required: true
+        options:
+          - tt02
+          - prod
+
+jobs:
+  promote:
+
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      id-token: write # Require write permission to Fetch an OIDC token.
+    defaults:
+      run:
+        working-directory: ./AppsMonitoring
+
+    steps:
+      - name: validate inputs
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            const allowedPromotions = [
+              ['at24', 'tt02'],
+              ['tt02', 'prod']
+            ];
+            const current = [
+              '${{ github.event.inputs.from }}', 
+              '${{ github.event.inputs.to }}'
+            ];
+            const promotion = allowedPromotions.find(c => c[0] === current[0] && c[1] === current[1]);
+            if (!promotion) {
+              core.setFailed(`Cannot promote from: ${current[0]} to ${current[1]}`);
+            }
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: flux install
+        uses: fluxcd/flux2/action@3b42b200d376430f0e24d35f1a600447d92da531 # No tag
+        with:
+          version: '2.5.1'
+
+      - name: set vars
+        id: vars
+        run: |
+          echo "registry=altinncr.azurecr.io" >> $GITHUB_OUTPUT
+
+      - name: az login
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.ALTINNCR_SUBSCRIPTION_ID }
+
+      - name: az acr login
+        uses: azure/cli@089eac9d8cc39f5d003e94f8b65efc51076c9cbd # v2.1.0
+        with:
+          inlineScript: |
+            az acr login --name altinncr
+
+      - name: Build latest artifact
+        run: |
+          flux tag artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/config:${{ github.event.inputs.from }} \
+              --provider=generic \
+              --tag ${{ github.event.inputs.to }}

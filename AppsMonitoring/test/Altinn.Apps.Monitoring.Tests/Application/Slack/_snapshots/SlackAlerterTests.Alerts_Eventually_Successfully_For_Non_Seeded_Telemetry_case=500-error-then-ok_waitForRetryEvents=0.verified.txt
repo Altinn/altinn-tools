@@ -1,0 +1,155 @@
+﻿{
+  OrchestratorEvents: [
+    {
+      ServiceOwner: {
+        Value: skd
+      },
+      Query: {
+        Name: query,
+        Type: Traces,
+        QueryTemplate: template-{searchFrom}-{searchTo},
+        Hash: HpynynzeF9Pk52Vahp477Q==
+      },
+      SearchFrom: 2024-11-22T11:59:59Z,
+      SearchTo: 2025-02-20T11:50:00Z,
+      Telemetry: [
+        {
+          ExtId: 75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c1,
+          ServiceOwner: skd,
+          AppName: formueinntekt-skattemelding-v2,
+          AppVersion: 8.0.8,
+          TimeGenerated: 2025-02-15T14:51:04.906736Z,
+          TimeIngested: 2025-02-20T12:00:05Z,
+          Seeded: false,
+          Data: {Scrubbed}
+        },
+        {
+          ExtId: 75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c2,
+          ServiceOwner: skd,
+          AppName: formueinntekt-skattemelding-v2,
+          AppVersion: 8.0.8,
+          TimeGenerated: 2025-02-15T14:56:04.906736Z,
+          TimeIngested: 2025-02-20T12:00:05Z,
+          Seeded: false,
+          Data: {Scrubbed}
+        }
+      ],
+      Result: {
+        Written: 1,
+        Ids: [
+          1,
+          5
+        ],
+        DupeExtIds: [
+          75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c1
+        ]
+      }
+    }
+  ],
+  AlerterEvents: [
+    {
+      Item: {
+        Id: 5,
+        ExtId: 75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c2,
+        ServiceOwner: skd,
+        AppName: formueinntekt-skattemelding-v2,
+        AppVersion: 8.0.8,
+        TimeGenerated: 2025-02-15T14:56:04.906736Z,
+        TimeIngested: 2025-02-20T12:00:05Z,
+        Seeded: false,
+        Data: {Scrubbed}
+      },
+      AlertBefore: {
+        State: Pending,
+        TelemetryId: 5,
+        Data: {},
+        CreatedAt: {Scrubbed},
+        UpdatedAt: {Scrubbed}
+      },
+      AlertAfter: {
+        State: Alerted,
+        TelemetryId: 5,
+        Data: {
+          Channel: C01UJ9G,
+          Message:
+*ALERT* `2025-02-15T14:56:04Z`:
+- App: *skd*/*formueinntekt-skattemelding-v2*/*8.0.8*
+- Feil: *POST /storage/api/v1/instances/123/1d449be1-7114-405c-aeee-1f09799f7b74/events* (status *Faulted*, *27478.49ms*)
+- Instansen: *123*/*1d449be1-7114-405c-aeee-1f09799f7b74*
+- Operation ID: *75563ff0b3251e04c70362c5a3495174*,
+          ThreadTs: 1634160000.000100
+        },
+        CreatedAt: {Scrubbed},
+        UpdatedAt: {Scrubbed}
+      }
+    }
+  ],
+  State: {
+    Telemetry: [
+      {
+        Id: 2,
+        ExtId: 4ba19e3f5a545728934b1f921e06d92b-f86a2aed5c5d9f63,
+        ServiceOwner: tad,
+        AppName: bku,
+        AppVersion: 6.0.35,
+        TimeGenerated: 2025-02-19T08:29:04.386517Z,
+        TimeIngested: 2025-02-19T08:34:32.406732Z,
+        Seeded: true,
+        Data: {Scrubbed}
+      },
+      {
+        Id: 3,
+        ExtId: f2b6eea456788828f6195fbce59f740f-e0135dfc441dc49a,
+        ServiceOwner: ssb,
+        AppName: ra1000-01,
+        AppVersion: 6.0.26,
+        TimeGenerated: 2025-02-19T16:07:44.720544Z,
+        TimeIngested: 2025-02-19T16:00:13.785543Z,
+        Seeded: true,
+        Data: {Scrubbed}
+      },
+      {
+        Id: 1,
+        ExtId: 75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c1,
+        ServiceOwner: skd,
+        AppName: formueinntekt-skattemelding-v2,
+        AppVersion: 8.0.8,
+        TimeGenerated: 2025-02-15T14:51:04.906736Z,
+        TimeIngested: 2025-02-19T07:34:32.420042Z,
+        DupeCount: 1,
+        Seeded: true,
+        Data: {Scrubbed}
+      },
+      {
+        Id: 5,
+        ExtId: 75563ff0b3251e04c70362c5a3495174-90c159bde9b1a6c2,
+        ServiceOwner: skd,
+        AppName: formueinntekt-skattemelding-v2,
+        AppVersion: 8.0.8,
+        TimeGenerated: 2025-02-15T14:56:04.906736Z,
+        TimeIngested: 2025-02-20T12:00:05Z,
+        Seeded: false,
+        Data: {Scrubbed}
+      }
+    ],
+    Alerts: [
+      {
+        Id: 1,
+        State: Alerted,
+        TelemetryId: 5,
+        Data: {
+          Channel: C01UJ9G,
+          Message:
+*ALERT* `2025-02-15T14:56:04Z`:
+- App: *skd*/*formueinntekt-skattemelding-v2*/*8.0.8*
+- Feil: *POST /storage/api/v1/instances/123/1d449be1-7114-405c-aeee-1f09799f7b74/events* (status *Faulted*, *27478.49ms*)
+- Instansen: *123*/*1d449be1-7114-405c-aeee-1f09799f7b74*
+- Operation ID: *75563ff0b3251e04c70362c5a3495174*,
+          ThreadTs: 1634160000.000100
+        },
+        CreatedAt: {Scrubbed},
+        UpdatedAt: {Scrubbed}
+      }
+    ]
+  }
+}
