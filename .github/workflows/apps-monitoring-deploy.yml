@@ -74,12 +74,12 @@ jobs:
 
       - name: push deployment
         run: |
-          flux push artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/config:${{ steps.vars.outputs.image_tag }} \
+          flux push artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/configs:${{ steps.vars.outputs.image_tag }} \
               --provider=generic \
               --reproducible \
               --path="." \
               --source="$(git config --get remote.origin.url)" \
               --revision="$(git branch --show-current)/${{ steps.vars.outputs.image_tag }}"
-          flux tag artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/config:${{ steps.vars.outputs.image_tag }} \
+          flux tag artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/configs:${{ steps.vars.outputs.image_tag }} \
               --provider=generic \
               --tag at24

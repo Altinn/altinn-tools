@@ -74,6 +74,6 @@ jobs:
 
       - name: Build latest artifact
         run: |
-          flux tag artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/config:${{ github.event.inputs.from }} \
+          flux tag artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/configs:${{ github.event.inputs.from }} \
               --provider=generic \
               --tag ${{ github.event.inputs.to }}
