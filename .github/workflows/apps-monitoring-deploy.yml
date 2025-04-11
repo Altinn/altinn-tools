@@ -74,6 +74,7 @@ jobs:
 
       - name: push deployment
         run: |
+          cd infra/deployment
           flux push artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/configs:${{ steps.vars.outputs.image_tag }} \
               --provider=generic \
               --reproducible \
