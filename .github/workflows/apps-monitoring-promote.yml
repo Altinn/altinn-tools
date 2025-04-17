@@ -50,7 +50,7 @@ jobs:
             }
 
       - name: flux install
-        uses: fluxcd/flux2/action@3b42b200d376430f0e24d35f1a600447d92da531 # No tag
+        uses: fluxcd/flux2/action@d9b66f69597f30bb3e50167ce86804f4d55385cb # No tag
         with:
           version: '2.5.1'
 
