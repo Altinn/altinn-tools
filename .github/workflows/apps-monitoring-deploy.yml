@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: flux install
-        uses: fluxcd/flux2/action@3b42b200d376430f0e24d35f1a600447d92da531 # No tag
+        uses: fluxcd/flux2/action@e9e15c5f7a7609b1075dc3558c98c3468ee5828b # No tag
         with:
           version: '2.5.1'
 
