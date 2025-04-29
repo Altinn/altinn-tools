@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Just to initialize some variables in we expect in Azure KV
+# Used to initialize an environment
 # Prereqs:
 # * Azure CLI
 # * Export PGxxxx variables for psql to connect to corresponding db (see Settings -> Connect in Azure portal)
