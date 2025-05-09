@@ -66,7 +66,7 @@ jobs:
       - name: az acr login
         run: az acr login --name altinncr
 
-      - name: Build latest artifact
+      - name: Tag config artifact
         run: |
           flux tag artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/configs:${{ github.event.inputs.from }} \
               --provider=generic \
