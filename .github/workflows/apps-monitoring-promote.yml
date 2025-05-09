@@ -27,9 +27,6 @@ jobs:
     environment: prod
     permissions:
       id-token: write # Require write permission to Fetch an OIDC token.
-    defaults:
-      run:
-        working-directory: ./AppsMonitoring
 
     steps:
       - name: validate inputs
