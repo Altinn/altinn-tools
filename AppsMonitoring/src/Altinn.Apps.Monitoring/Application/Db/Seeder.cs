@@ -43,7 +43,7 @@ internal sealed class Seeder(
             }
 
             var seedData = await _repository.GetSqliteSeed(cancellationToken);
-            if (seedData == null)
+            if (seedData is null)
             {
                 _logger.LogInformation("No seed data found");
                 return;
