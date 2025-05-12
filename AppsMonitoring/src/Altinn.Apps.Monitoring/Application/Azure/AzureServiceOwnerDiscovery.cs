@@ -18,6 +18,7 @@ internal sealed class AzureServiceOwnerDiscovery(
     private readonly ArmClient _armClient = clients.ArmClient;
     private readonly AzureServiceOwnerResources _serviceOwnerResources = serviceOwnerResources;
     private readonly Telemetry _telemetry = telemetry;
+    private long _iteration = -1;
 
     public async ValueTask<IReadOnlyList<ServiceOwner>> Discover(CancellationToken cancellationToken)
     {
@@ -30,11 +31,21 @@ internal sealed class AzureServiceOwnerDiscovery(
             "tt02" => "test",
             _ => throw new Exception("Unexpected environment: " + env),
         };
+        var iteration = Interlocked.Increment(ref _iteration);
         var serviceOwners = new ConcurrentBag<ServiceOwner>();
         await Parallel.ForEachAsync(
             _armClient.GetSubscriptions().GetAllAsync(cancellationToken),
             async (subscription, cancellationToken) =>
             {
+                if (iteration == 0)
+                {
+                    _logger.LogInformation(
+                        "Found Subscription {SubscriptionId}: {DisplayName}",
+                        subscription.Id.SubscriptionId,
+                        subscription.Data.DisplayName
+                    );
+                }
+
                 if (!subscription.Data.DisplayName.StartsWith("altinn", StringComparison.OrdinalIgnoreCase))
                     return;
                 if (!subscription.Data.DisplayName.EndsWith(envToMatch, StringComparison.OrdinalIgnoreCase))
