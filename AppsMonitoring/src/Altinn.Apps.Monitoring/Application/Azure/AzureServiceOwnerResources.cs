@@ -1,22 +1,26 @@
 using System.ComponentModel;
 using Altinn.Apps.Monitoring.Domain;
-using Azure.ResourceManager;
+using Azure;
+using Azure.Core;
+using Azure.Monitor.Query;
+using Azure.Monitor.Query.Models;
 using Azure.ResourceManager.OperationalInsights;
-using Azure.ResourceManager.Resources;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Apps.Monitoring.Application.Azure;
 
 internal sealed class AzureServiceOwnerResources(
+    ILogger<AzureServiceOwnerResources> logger,
     IOptionsMonitor<AppConfiguration> config,
     AzureClients clients,
     HybridCache cache,
     Telemetry telemetry
 )
 {
+    private readonly ILogger<AzureServiceOwnerResources> _logger = logger;
     private readonly IOptionsMonitor<AppConfiguration> _config = config;
-    private readonly ArmClient _armClient = clients.ArmClient;
+    private readonly AzureClients _clients = clients;
     private readonly HybridCache _cache = cache;
     private readonly Telemetry _telemetry = telemetry;
 
@@ -45,30 +49,59 @@ internal sealed class AzureServiceOwnerResources(
                     return null;
 
                 var env = config.AltinnEnvironment;
-                var subscription = await self
-                    ._armClient.GetSubscriptions()
-                    .GetAsync(serviceOwner.ExtId, cancellationToken: cancellationToken);
-                if (subscription is null)
-                    return null;
 
-                var rgs = await subscription
-                    .Value.GetResourceGroups()
-                    .GetAllAsync(cancellationToken: cancellationToken)
-                    .ToArrayAsync(cancellationToken);
-                var rg = rgs.SingleOrDefault(rg => rg.Data.Name == $"monitor-{serviceOwner.Value}-{env}-rg");
-                if (rg is null)
+                ResourceIdentifier workspaceId;
+                try
+                {
+                    workspaceId = OperationalInsightsWorkspaceResource.CreateResourceIdentifier(
+                        serviceOwner.ExtId,
+                        $"monitor-{serviceOwner.Value}-{env}-rg",
+                        $"application-{serviceOwner.Value}-{env}-law"
+                    );
+                }
+                catch (Exception ex)
+                {
+                    self._logger.LogWarning(
+                        ex,
+                        "Failed to create workspace ID for service owner {ServiceOwner}. Subscription ID: '{SubscriptionId}'",
+                        serviceOwner.Value,
+                        serviceOwner.ExtId
+                    );
                     return null;
+                }
 
-                var workspaces = await rg.GetOperationalInsightsWorkspaces()
-                    .GetAllAsync(cancellationToken: cancellationToken)
-                    .ToArrayAsync(cancellationToken);
-                var workspace = workspaces.SingleOrDefault(ws =>
-                    ws.Data.Name == $"application-{serviceOwner.Value}-{env}-law"
-                );
-                if (workspace is null)
+                try
+                {
+                    Response<LogsQueryResult> results = await self._clients.LogsQueryClient.QueryResourceAsync(
+                        workspaceId,
+                        "AppDependencies",
+                        new QueryTimeRange(TimeSpan.FromMinutes(5)),
+                        cancellationToken: cancellationToken
+                    );
+                    if (results.Value.Status != LogsQueryResultStatus.Success)
+                    {
+                        self._logger.LogWarning(
+                            "Failed to probe workspace '{WorkspaceId}' for service owner {ServiceOwner}: {Status}/{Error}",
+                            workspaceId,
+                            serviceOwner.Value,
+                            results.Value.Status,
+                            results.Value.Error
+                        );
+                        return null;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    self._logger.LogWarning(
+                        ex,
+                        "Failed to probe workspace '{WorkspaceId}' for service owner {ServiceOwner}",
+                        workspaceId,
+                        serviceOwner.Value
+                    );
                     return null;
+                }
 
-                return new(subscription.Value, rg, workspace);
+                return new(workspaceId);
             },
             options: _cacheEntryOptions,
             cancellationToken: cancellationToken
@@ -77,8 +110,4 @@ internal sealed class AzureServiceOwnerResources(
 }
 
 [ImmutableObject(true)]
-internal sealed record AzureServiceOwnerResourcesRecord(
-    SubscriptionResource Subscription,
-    ResourceGroupResource ResourceGroup,
-    OperationalInsightsWorkspaceResource Workspace
-);
+internal sealed record AzureServiceOwnerResourcesRecord(ResourceIdentifier WorkspaceId);
