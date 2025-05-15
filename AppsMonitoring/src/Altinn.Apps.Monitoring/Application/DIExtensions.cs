@@ -302,6 +302,7 @@ internal static class DIExtensions
             {
                 connStringBuilder.SslMode = SslMode.Require;
                 connStringBuilder.KeepAlive = 30;
+                connStringBuilder.MaxPoolSize = 40; // Azure PG is sized to 50
             }
 
             return new ConnectionString(connStringBuilder.ToString());

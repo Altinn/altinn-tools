@@ -1,4 +1,3 @@
-using System.Text;
 using Altinn.Apps.Monitoring.Domain;
 using Npgsql;
 using NpgsqlTypes;

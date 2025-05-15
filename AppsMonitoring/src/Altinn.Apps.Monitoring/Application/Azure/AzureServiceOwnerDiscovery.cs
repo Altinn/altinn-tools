@@ -35,6 +35,11 @@ internal sealed class AzureServiceOwnerDiscovery(
         var serviceOwners = new ConcurrentBag<ServiceOwner>();
         await Parallel.ForEachAsync(
             _armClient.GetSubscriptions().GetAllAsync(cancellationToken),
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = Math.Max(4, Environment.ProcessorCount),
+                CancellationToken = cancellationToken,
+            },
             async (subscription, cancellationToken) =>
             {
                 if (iteration == 0)
