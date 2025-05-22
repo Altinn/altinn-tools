@@ -66,7 +66,7 @@ jobs:
         run: docker push ${{ steps.vars.outputs.image }}
 
       - name: yq install
-        uses: mikefarah/yq@c59fa8de59f1f5a16fdbfd1e2a6e97a1b42a64b9 # v4.45.2
+        uses: mikefarah/yq@b534aa9ee5d38001fba3cd8fe254a037e4847b37 # v4.45.4
 
       - name: patch base with image tag
         run: |
