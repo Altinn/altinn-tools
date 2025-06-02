@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0-noble@sha256:c84968764a7d265a29cc840096750816d82655369d6ad03bcdf65f790684fd21 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0-noble@sha256:9f7bd4d010026e15a57d9cf876f2f7d08c3eeed6a0ea987b8c5ba8c75e68e948 AS build
 WORKDIR /source
 
 COPY ./Directory.Build.props ./
