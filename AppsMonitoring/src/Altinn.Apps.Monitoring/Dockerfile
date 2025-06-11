@@ -1,5 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0-noble@sha256:4f50505b5344e9d8a76805d71bb4ba76da6b01656e17a66a8ce1e4c4dfaaec12 AS build
 WORKDIR /source
+ENV CI=true
 
 COPY ./Directory.Build.props ./
 COPY ./.csharpierrc.yaml ./
