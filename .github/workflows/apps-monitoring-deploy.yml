@@ -2,11 +2,6 @@ name: Apps.Monitoring deploy
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - AppsMonitoring/**
-    branches:
-      - main
 
 jobs:
   deploy:
