@@ -4,6 +4,7 @@ ENV CI=true
 
 COPY ./Directory.Build.props ./
 COPY ./.csharpierrc.yaml ./
+COPY ./.csharpierignore ./
 COPY ./.editorconfig ./
 COPY ./src/Altinn.Apps.Monitoring/Altinn.Apps.Monitoring.csproj ./src/Altinn.Apps.Monitoring/Altinn.Apps.Monitoring.csproj
 WORKDIR /source/src/Altinn.Apps.Monitoring/
