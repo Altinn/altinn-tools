@@ -74,7 +74,7 @@ internal sealed class AzureServiceOwnerResources(
                 {
                     Response<LogsQueryResult> results = await self._clients.LogsQueryClient.QueryResourceAsync(
                         workspaceId,
-                        "AppDependencies",
+                        "AppDependencies | project TimeGenerated",
                         new QueryTimeRange(TimeSpan.FromMinutes(5)),
                         cancellationToken: cancellationToken
                     );
