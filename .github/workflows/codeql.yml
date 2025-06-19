@@ -3,13 +3,9 @@ name: "CodeQL"
 on:
   push:
     branches: [ main ]
-    paths:
-    - 'src/**'
   pull_request:
     branches: [ main ]
     types: [opened, synchronize, reopened]
-    paths:
-    - 'src/**'
   schedule:
     - cron: '18 22 * * 3'
 
