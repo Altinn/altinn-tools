@@ -9,13 +9,13 @@ f() {
     # Function is executed in subshell to avoid changing working directory
     cd deployment/
 
-    flux push artifact oci://altinncr.azurecr.io/apps-monitor/config:$(git rev-parse --short HEAD) \
+    flux push artifact oci://altinncr.azurecr.io/apps-monitor/configs:$(git rev-parse --short HEAD) \
         --provider=generic \
         --reproducible \
         --path="." \
         --source="$(git config --get remote.origin.url)" \
         --revision="$(git branch --show-current)/$(git rev-parse HEAD)"
-    flux tag artifact oci://altinncr.azurecr.io/apps-monitor/config:$(git rev-parse --short HEAD) \
+    flux tag artifact oci://altinncr.azurecr.io/apps-monitor/configs:$(git rev-parse --short HEAD) \
         --provider=generic \
         --tag at24
 

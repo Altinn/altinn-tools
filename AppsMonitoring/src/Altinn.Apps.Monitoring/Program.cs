@@ -137,7 +137,11 @@ app.MapPost(
             ConcurrentBag<IReadOnlyList<MetricItem>> metrics = new();
             await Parallel.ForEachAsync(
                 serviceOwners,
-                new ParallelOptions { CancellationToken = cancellationToken },
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = Math.Max(4, Environment.ProcessorCount),
+                    CancellationToken = cancellationToken,
+                },
                 async (serviceOwner, cancellationToken) =>
                 {
                     var serviceOwnerMetrics = await adapter.Query(

@@ -302,6 +302,10 @@ internal static class DIExtensions
             {
                 connStringBuilder.SslMode = SslMode.Require;
                 connStringBuilder.KeepAlive = 30;
+                // Azure PG mx user connections for current size is 35
+                // By limiting pool size to 25 we leave some room for other services
+                // https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-limits#maximum-connections
+                connStringBuilder.MaxPoolSize = 25;
             }
 
             return new ConnectionString(connStringBuilder.ToString());

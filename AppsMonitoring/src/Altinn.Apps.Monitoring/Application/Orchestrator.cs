@@ -42,6 +42,7 @@ internal sealed class Orchestrator(
 #pragma warning restore CA2213 // Disposable fields should be disposed
 
     private Task? _serviceOwnerDiscoveryThread;
+    private readonly SemaphoreSlim _semaphore = new(10, 10);
     private ConcurrentDictionary<ServiceOwner, Task> _serviceOwnerThreads = new();
     private Channel<OrchestratorEvent>? _events;
 
@@ -156,124 +157,14 @@ internal sealed class Orchestrator(
             startActivity = null;
             do
             {
-                using var activity = _telemetry.Activities.StartRootActivity(
-                    "Orchestrator.ServiceOwnerThread.Iteration"
-                );
-                activity?.SetTag("serviceowner", serviceOwner.Value);
-
-                IReadOnlyList<Query> queries;
+                await _semaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    queries = await _queryLoader.Load(cancellationToken);
+                    await ServiceOwnerThreadIteration(serviceOwner, options, cancellationToken);
                 }
-                catch (Exception ex) when (ex is not OperationCanceledException)
+                finally
                 {
-                    _logger.LogError(ex, "[{ServiceOwner}] failed loading queries, trying again soon...", serviceOwner);
-                    continue;
-                }
-                foreach (var query in queries)
-                {
-                    using var queryActivity = _telemetry.Activities.StartActivity(
-                        "Orchestrator.ServiceOwnerThread.Query"
-                    );
-                    queryActivity?.SetTag("query", query.Name);
-                    try
-                    {
-                        var queryStates = await _repository.ListQueryStates(serviceOwner, query, cancellationToken);
-                        var queryState = queryStates.SingleOrDefault();
-
-                        var searchTimestamp = _timeProvider.GetCurrentInstant();
-                        var searchFrom =
-                            queryState?.QueriedUntil
-                            ?? searchTimestamp
-                                .Minus(Duration.FromDays(options.SearchFromDays))
-                                .Minus(Duration.FromSeconds(1));
-                        var searchTo = _timeProvider.GetCurrentInstant().Minus(Duration.FromMinutes(10));
-
-                        _logger.LogInformation(
-                            "[{ServiceOwner}] querying '{Query}' from {SearchFrom} to {SearchTo}",
-                            serviceOwner,
-                            query.Name,
-                            searchFrom,
-                            searchTo
-                        );
-
-                        var tables = await _serviceOwnerLogs.Query(
-                            serviceOwner,
-                            query,
-                            searchFrom,
-                            searchTo,
-                            cancellationToken: cancellationToken
-                        );
-
-                        var totalRows = tables.Sum(t => t.Count);
-                        if (totalRows > 0)
-                        {
-                            _logger.LogInformation(
-                                "[{ServiceOwner}] found {TotalRows} rows in {TableCount} tables",
-                                serviceOwner,
-                                totalRows,
-                                tables.Count
-                            );
-                        }
-
-                        var ingestionTimestamp = _timeProvider.GetCurrentInstant();
-                        List<TelemetryEntity> telemetry = new(totalRows);
-                        var positionByExtId = new Dictionary<string, int>(totalRows).GetAlternateLookup<
-                            ReadOnlySpan<char>
-                        >();
-                        foreach (var table in tables)
-                        {
-                            foreach (var row in table)
-                            {
-                                if (positionByExtId.TryGetValue(row.ExtId, out var index))
-                                {
-                                    _logger.LogWarning(
-                                        "[{ServiceOwner}] found duplicate telemetry entry for {ExtId}",
-                                        serviceOwner,
-                                        row.ExtId
-                                    );
-                                    var existing = telemetry[index];
-                                    var shouldReplace = (row.Data, existing.Data) switch
-                                    {
-                                        (TraceData @new, TraceData old) => @new.Duration > old.Duration,
-                                        _ => throw new NotSupportedException(),
-                                    };
-                                    if (shouldReplace)
-                                        telemetry[index] = row with { TimeIngested = ingestionTimestamp };
-                                }
-                                else
-                                {
-                                    positionByExtId.Dictionary.Add(row.ExtId, telemetry.Count);
-                                    telemetry.Add(row with { TimeIngested = ingestionTimestamp });
-                                }
-                            }
-                        }
-
-                        Debug.Assert(
-                            telemetry.GroupBy(t => t.ExtId).All(g => g.Count() == 1),
-                            "Should have gotten rid of dupes"
-                        );
-
-                        var result = await _repository.InsertTelemetry(
-                            serviceOwner,
-                            query,
-                            searchTo,
-                            telemetry,
-                            cancellationToken
-                        );
-
-                        Debug.Assert(_events is not null);
-                        await _events.Writer.WriteAsync(
-                            new OrchestratorEvent(serviceOwner, query, searchFrom, searchTo, telemetry, result),
-                            cancellationToken
-                        );
-                    }
-                    catch (Exception ex) when (ex is not OperationCanceledException)
-                    {
-                        queryActivity?.AddException(ex);
-                        _logger.LogError(ex, "[{ServiceOwner}] failed to query, trying again soon...", serviceOwner);
-                    }
+                    _semaphore.Release();
                 }
             } while (await timer.WaitForNextTickAsync(cancellationToken));
         }
@@ -293,6 +184,125 @@ internal sealed class Orchestrator(
         }
     }
 
+    private async Task ServiceOwnerThreadIteration(
+        ServiceOwner serviceOwner,
+        AppConfiguration options,
+        CancellationToken cancellationToken
+    )
+    {
+        using var activity = _telemetry.Activities.StartRootActivity("Orchestrator.ServiceOwnerThread.Iteration");
+        activity?.SetTag("serviceowner", serviceOwner.Value);
+
+        IReadOnlyList<Query> queries;
+        try
+        {
+            queries = await _queryLoader.Load(cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "[{ServiceOwner}] failed loading queries, trying again soon...", serviceOwner);
+            return;
+        }
+        foreach (var query in queries)
+        {
+            using var queryActivity = _telemetry.Activities.StartActivity("Orchestrator.ServiceOwnerThread.Query");
+            queryActivity?.SetTag("query", query.Name);
+            try
+            {
+                var queryStates = await _repository.ListQueryStates(serviceOwner, query, cancellationToken);
+                var queryState = queryStates.SingleOrDefault();
+
+                var searchTimestamp = _timeProvider.GetCurrentInstant();
+                var searchFrom =
+                    queryState?.QueriedUntil
+                    ?? searchTimestamp.Minus(Duration.FromDays(options.SearchFromDays)).Minus(Duration.FromSeconds(1));
+                var searchTo = _timeProvider.GetCurrentInstant().Minus(Duration.FromMinutes(10));
+
+                _logger.LogInformation(
+                    "[{ServiceOwner}] querying '{Query}' from {SearchFrom} to {SearchTo}",
+                    serviceOwner,
+                    query.Name,
+                    searchFrom,
+                    searchTo
+                );
+
+                var tables = await _serviceOwnerLogs.Query(
+                    serviceOwner,
+                    query,
+                    searchFrom,
+                    searchTo,
+                    cancellationToken: cancellationToken
+                );
+
+                var totalRows = tables.Sum(t => t.Count);
+                if (totalRows > 0)
+                {
+                    _logger.LogInformation(
+                        "[{ServiceOwner}] found {TotalRows} rows in {TableCount} tables",
+                        serviceOwner,
+                        totalRows,
+                        tables.Count
+                    );
+                }
+
+                var ingestionTimestamp = _timeProvider.GetCurrentInstant();
+                List<TelemetryEntity> telemetry = new(totalRows);
+                var positionByExtId = new Dictionary<string, int>(totalRows).GetAlternateLookup<ReadOnlySpan<char>>();
+                foreach (var table in tables)
+                {
+                    foreach (var row in table)
+                    {
+                        if (positionByExtId.TryGetValue(row.ExtId, out var index))
+                        {
+                            _logger.LogWarning(
+                                "[{ServiceOwner}] found duplicate telemetry entry for {ExtId}",
+                                serviceOwner,
+                                row.ExtId
+                            );
+                            var existing = telemetry[index];
+                            var shouldReplace = (row.Data, existing.Data) switch
+                            {
+                                (TraceData @new, TraceData old) => @new.Duration > old.Duration,
+                                _ => throw new NotSupportedException(),
+                            };
+                            if (shouldReplace)
+                                telemetry[index] = row with { TimeIngested = ingestionTimestamp };
+                        }
+                        else
+                        {
+                            positionByExtId.Dictionary.Add(row.ExtId, telemetry.Count);
+                            telemetry.Add(row with { TimeIngested = ingestionTimestamp });
+                        }
+                    }
+                }
+
+                Debug.Assert(
+                    telemetry.GroupBy(t => t.ExtId).All(g => g.Count() == 1),
+                    "Should have gotten rid of dupes"
+                );
+
+                var result = await _repository.InsertTelemetry(
+                    serviceOwner,
+                    query,
+                    searchTo,
+                    telemetry,
+                    cancellationToken
+                );
+
+                Debug.Assert(_events is not null);
+                await _events.Writer.WriteAsync(
+                    new OrchestratorEvent(serviceOwner, query, searchFrom, searchTo, telemetry, result),
+                    cancellationToken
+                );
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                queryActivity?.AddException(ex);
+                _logger.LogError(ex, "[{ServiceOwner}] failed to query, trying again soon...", serviceOwner);
+            }
+        }
+    }
+
     public async Task Stop()
     {
         if (_serviceOwnerDiscoveryThread is not null)
@@ -308,5 +318,6 @@ internal sealed class Orchestrator(
     public void Dispose()
     {
         _cancellationTokenSource?.Dispose();
+        _semaphore.Dispose();
     }
 }

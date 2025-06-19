@@ -2,11 +2,6 @@ name: Apps.Monitoring deploy
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - AppsMonitoring/**
-    branches:
-      - main
 
 jobs:
   deploy:
@@ -25,7 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: flux install
-        uses: fluxcd/flux2/action@8d9cbe7693cde4200b70e9ae4749cecb47d3f445 # No tag
+        uses: fluxcd/flux2/action@b73c7f7191086ca7629840e680e71873349787f8 # v2.6.1
         with:
           version: '2.5.1'
 
@@ -44,16 +39,13 @@ jobs:
           subscription-id: ${{ secrets.ALTINNCR_SUBSCRIPTION_ID }}
 
       - name: az acr login
-        uses: azure/cli@089eac9d8cc39f5d003e94f8b65efc51076c9cbd # v2.1.0
-        with:
-          inlineScript: |
-            az acr login --name altinncr
+        run: az acr login --name altinncr
 
       - name: docker build
         run: docker build -t ${{ steps.vars.outputs.image }} -f src/Altinn.Apps.Monitoring/Dockerfile .
 
       - name: scan image
-        uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5 # 0.30.0
+        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.31.0
         with:
           image-ref: '${{ steps.vars.outputs.image }}'
           format: 'table'
@@ -77,12 +69,13 @@ jobs:
 
       - name: push deployment
         run: |
-          flux push artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/config:${{ steps.vars.outputs.image_tag }} \
+          cd infra/deployment
+          flux push artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/configs:${{ steps.vars.outputs.image_tag }} \
               --provider=generic \
               --reproducible \
               --path="." \
               --source="$(git config --get remote.origin.url)" \
               --revision="$(git branch --show-current)/${{ steps.vars.outputs.image_tag }}"
-          flux tag artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/config:${{ steps.vars.outputs.image_tag }} \
+          flux tag artifact oci://${{ steps.vars.outputs.registry }}/apps-monitor/configs:${{ steps.vars.outputs.image_tag }} \
               --provider=generic \
               --tag at24

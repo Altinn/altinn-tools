@@ -1,4 +1,3 @@
-using System.Text;
 using Altinn.Apps.Monitoring.Domain;
 using Npgsql;
 using NpgsqlTypes;
@@ -36,17 +35,15 @@ internal sealed class Repository(
     private readonly NpgsqlDataSource _userDataSource = userDataSource;
     private readonly NpgsqlDataSource _adminDataSource = adminDataSource;
 
-    public async ValueTask<byte[]> GetSqliteSeed(CancellationToken cancellationToken)
+    public async ValueTask<byte[]?> GetSqliteSeed(CancellationToken cancellationToken)
     {
         await using var connection = await _adminDataSource.OpenConnectionAsync(cancellationToken);
         await using var command = connection.CreateCommand();
         command.CommandText = $"SELECT data FROM {Tables.Seed} ORDER BY id DESC LIMIT 1";
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
-        if (result is not byte[] seed)
-            throw new InvalidOperationException("Unexpected result from seed query: " + result?.GetType());
 
-        return seed;
+        return result as byte[];
     }
 
     public async ValueTask<IReadOnlyList<QueryStateEntity>> ListQueryStates(

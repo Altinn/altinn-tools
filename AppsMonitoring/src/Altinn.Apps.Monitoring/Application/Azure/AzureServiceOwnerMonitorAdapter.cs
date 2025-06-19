@@ -4,9 +4,9 @@ using System.Text.RegularExpressions;
 using Altinn.Apps.Monitoring.Application.Db;
 using Altinn.Apps.Monitoring.Domain;
 using Azure;
+using Azure.Core;
 using Azure.Monitor.Query;
 using Azure.Monitor.Query.Models;
-using Azure.ResourceManager.OperationalInsights;
 
 namespace Altinn.Apps.Monitoring.Application.Azure;
 
@@ -40,14 +40,14 @@ internal sealed partial class AzureServiceOwnerMonitorAdapter(
         if (resources is null)
             return [];
 
-        var (_, _, workspace) = resources;
+        var workspaceId = resources.WorkspaceId;
 
         switch (query.Type)
         {
             case QueryType.Traces:
-                return await QueryTraces(serviceOwner, query, workspace, from, to, cancellationToken);
+                return await QueryTraces(serviceOwner, query, workspaceId, from, to, cancellationToken);
             case QueryType.Metrics:
-                return await QueryMetrics(serviceOwner, query, workspace, from, to, cancellationToken);
+                return await QueryMetrics(serviceOwner, query, workspaceId, from, to, cancellationToken);
             default:
                 throw new NotSupportedException($"Query type {query.Type} not supported");
         }
@@ -56,7 +56,7 @@ internal sealed partial class AzureServiceOwnerMonitorAdapter(
     private async ValueTask<IReadOnlyList<IReadOnlyList<TelemetryEntity>>> QueryTraces(
         ServiceOwner serviceOwner,
         Query query,
-        OperationalInsightsWorkspaceResource workspace,
+        ResourceIdentifier workspaceId,
         Instant from,
         Instant to,
         CancellationToken cancellationToken
@@ -65,7 +65,7 @@ internal sealed partial class AzureServiceOwnerMonitorAdapter(
         var searchTimestamp = _timeProvider.GetCurrentInstant();
 
         Response<LogsQueryResult> results = await _logsClient.QueryResourceAsync(
-            workspace.Id,
+            workspaceId,
             query.Format(from, to),
             new QueryTimeRange((to - from).Plus(Duration.FromMinutes(5)).ToTimeSpan()),
             cancellationToken: cancellationToken
@@ -93,7 +93,7 @@ internal sealed partial class AzureServiceOwnerMonitorAdapter(
     private async ValueTask<IReadOnlyList<IReadOnlyList<TelemetryEntity>>> QueryMetrics(
         ServiceOwner serviceOwner,
         Query query,
-        OperationalInsightsWorkspaceResource workspace,
+        ResourceIdentifier workspaceId,
         Instant from,
         Instant to,
         CancellationToken cancellationToken
@@ -102,7 +102,7 @@ internal sealed partial class AzureServiceOwnerMonitorAdapter(
         var searchTimestamp = _timeProvider.GetCurrentInstant();
 
         Response<LogsQueryResult> results = await _logsClient.QueryResourceAsync(
-            workspace.Id,
+            workspaceId,
             query.Format(from, to),
             new QueryTimeRange((to - from).Plus(Duration.FromMinutes(5)).ToTimeSpan()),
             cancellationToken: cancellationToken

@@ -24,7 +24,7 @@ internal sealed class Seeder(
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var activity = _telemetry.Activities.StartActivity("Seeder.Run");
-        var dbFilePath = Path.Combine(Path.GetTempPath(), "seed.db");
+        var dbFilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".db");
         try
         {
             await using var handle = await _locking.AcquireLock(DistributedLockName.DbSeeder, cancellationToken);
@@ -43,7 +43,7 @@ internal sealed class Seeder(
             }
 
             var seedData = await _repository.GetSqliteSeed(cancellationToken);
-            if (seedData == null)
+            if (seedData is null)
             {
                 _logger.LogInformation("No seed data found");
                 return;
