@@ -1,3 +1,4 @@
-*                 @altinn/team-core
-AppsMonitoring/** @altinn/team-apps
-RepoCleanup/**    @altinn/team-studio
+*                                  @altinn/team-core
+AppsMonitoring/**                  @altinn/team-apps
+.github/workflows/apps-monitoring* @altinn/team-apps
+RepoCleanup/**                     @altinn/team-studio
