@@ -24,7 +24,7 @@ namespace RepoCleanup.Functions
             {
                 Console.WriteLine($"Could not create org {org.Fullname}");
                 return;
-            } 
+            }
             else
             {
                 Console.WriteLine($"Created org {org.Fullname}");
@@ -42,7 +42,7 @@ namespace RepoCleanup.Functions
             {
                 Console.WriteLine($"Created all default teams for {org.Fullname}");
             }
-            
+
             // Create default datamodels repository
             var createRepoForOrgsCommandHandler = new CreateRepoForOrgsCommandHandler(giteaService);
             var numberOfReposCreated = await createRepoForOrgsCommandHandler.Handle(new CreateRepoForOrgsCommand(new List<string>() { org.Username }, "datamodels", true));
@@ -54,6 +54,18 @@ namespace RepoCleanup.Functions
             else
             {
                 Console.WriteLine($"Created default datamodels repository for {org.Fullname}.");
+            }
+
+            // Create default static content repository
+            numberOfReposCreated = await createRepoForOrgsCommandHandler.Handle(new CreateRepoForOrgsCommand([org.Username], "content", true));
+            if (numberOfReposCreated != 1)
+            {
+                Console.WriteLine($"Could not create static content repository for {org.Fullname}");
+                return;
+            }
+            else
+            {
+                Console.WriteLine($"Created static content repository for {org.Fullname}.");
             }
 
             Console.WriteLine("Done setting up new serivce owner in Gitea!");
