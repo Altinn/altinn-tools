@@ -31,7 +31,7 @@
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.6.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.6" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="9.6.0" />
-    <PackageReference Include="WireMock.Net" Version="1.8.12" />
+    <PackageReference Include="WireMock.Net" Version="1.8.13" />
   </ItemGroup>
 
   <ItemGroup>
