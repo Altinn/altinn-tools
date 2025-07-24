@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: flux install
-        uses: fluxcd/flux2/action@bda4c8187e436462be0d072e728b67afa215c593 # v2.6.3
+        uses: fluxcd/flux2/action@6bf37f6a560fd84982d67f853162e4b3c2235edb # v2.6.4
         with:
           version: '2.5.1'
 
@@ -45,7 +45,7 @@ jobs:
         run: docker build -t ${{ steps.vars.outputs.image }} -f src/Altinn.Apps.Monitoring/Dockerfile .
 
       - name: scan image
-        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.31.0
+        uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # 0.32.0
         with:
           image-ref: '${{ steps.vars.outputs.image }}'
           format: 'table'
@@ -58,7 +58,7 @@ jobs:
         run: docker push ${{ steps.vars.outputs.image }}
 
       - name: yq install
-        uses: mikefarah/yq@b534aa9ee5d38001fba3cd8fe254a037e4847b37 # v4.45.4
+        uses: mikefarah/yq@1187c954ec44c3a0e62c13ca7dc9dadc1ca80ae7 # v4.46.1
 
       - name: patch base with image tag
         run: |
