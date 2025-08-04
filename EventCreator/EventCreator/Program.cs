@@ -48,7 +48,11 @@ for (var i = 0; i < lines.Length; i += 1)
 
     logWriter.WriteLine($"[{DateTime.Now}]:[{line}]: Instance FOUND, generating and sending event");
 
-    //// await eventsQueueClient.AddEvent("app.instance.process.completed", instance);
+    //// await eventsQueueClient.AddEvent("app.instance.process.movedTo.Task_2", instance);
+    //// await eventsQueueClient.AddEvent("app.instance.process.movedTo.Task_2Revisor", instance);
+    //// await eventsQueueClient.AddEvent("app.instance.process.movedTo.Task_3", instance);
+    //// await eventsQueueClient.AddEvent("app.instance.substatus.changed", instance);
+    await eventsQueueClient.AddEvent("app.instance.process.completed", instance);
 
     logWriter.WriteLine($"[{DateTime.Now}]:[{line}]: Finished processing");
 }
