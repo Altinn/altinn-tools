@@ -46,9 +46,9 @@ namespace RepoCleanup.Functions
             var isDatamodelRepoCreated = await CreateRepo(giteaService, org, "datamodels", true);
 
             // Create default content repository
-            var isStaticContentRepoCreated = await CreateRepo(giteaService, org, "content", false);
+            var isContentRepoCreated = await CreateRepo(giteaService, org, "content", false);
 
-            if (isDatamodelRepoCreated && isStaticContentRepoCreated)
+            if (isDatamodelRepoCreated && isContentRepoCreated)
             {
                 Console.WriteLine("Done setting up new serivce owner in Gitea!");
             }
