@@ -43,8 +43,8 @@ namespace RepoCleanup.Functions
             }
 
             // Create default repositories
-            var isDatamodelRepoCreated = await CreateRepo(giteaService, org, "datamodels", true);
-            var isContentRepoCreated = await CreateRepo(giteaService, org, "content", false);
+            var isDatamodelRepoCreated = await CreateRepo(giteaService, org, "datamodels");
+            var isContentRepoCreated = await CreateRepo(giteaService, org, "content");
 
             if (isDatamodelRepoCreated && isContentRepoCreated)
             {
@@ -52,10 +52,10 @@ namespace RepoCleanup.Functions
             }
         }
 
-        private static async Task<bool> CreateRepo(GiteaService giteaService, Organisation org, string repoName, bool preFixRepoNameWithOrg)
+        private static async Task<bool> CreateRepo(GiteaService giteaService, Organisation org, string repoName)
         {
             var createRepoForOrgsCommandHandler = new CreateRepoForOrgsCommandHandler(giteaService);
-            var numberOfReposCreated = await createRepoForOrgsCommandHandler.Handle(new CreateRepoForOrgsCommand([org.Username],  repoName, preFixRepoNameWithOrg));
+            var numberOfReposCreated = await createRepoForOrgsCommandHandler.Handle(new CreateRepoForOrgsCommand([org.Username],  repoName, true));
             if (numberOfReposCreated != 1)
             {
                 Console.WriteLine($"Could not create default {repoName} repository for {org.Fullname}");
