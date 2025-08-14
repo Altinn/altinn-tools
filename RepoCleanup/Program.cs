@@ -33,7 +33,7 @@ namespace RepoCleanup
             Console.WriteLine("6) Add existing team to repository for organisation(s)");
             Console.WriteLine("7) Migrate Altinn II XSD Schema for organisation(s)");
             Console.WriteLine("8) Delete repository for organisation(s)");
-            Console.WriteLine("9) Setup a new service owner in Gitea with all teams and default repository");
+            Console.WriteLine("9) Setup a new service owner in Gitea with all teams and default repositories");
             Console.WriteLine("0) Exit");
             Console.Write("\r\nSelect an option: ");
 
@@ -118,7 +118,7 @@ namespace RepoCleanup
                 case Application.Models.Environment.Local:
                     return "http://studio.localhost/repos/";
             }
-            
+
             return string.Empty;
         }
 

@@ -10,7 +10,7 @@ namespace RepoCleanup.Functions
     {
         public static async Task Run()
         {
-            SharedFunctionSnippets.WriteHeader("Setup a new service owner in Gitea with all teams and default repository.");
+            SharedFunctionSnippets.WriteHeader("Setup a new service owner in Gitea with all teams and default repositories.");
 
             var giteaService = new GiteaService();
 
