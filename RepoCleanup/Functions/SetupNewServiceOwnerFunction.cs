@@ -45,7 +45,7 @@ namespace RepoCleanup.Functions
 
             // Create default datamodels repository
             var createRepoForOrgsCommandHandler = new CreateRepoForOrgsCommandHandler(giteaService);
-            var numberOfReposCreated = await createRepoForOrgsCommandHandler.Handle(new CreateRepoForOrgsCommand(new List<string>() { org.Username }, "datamodels", true));
+            var numberOfReposCreated = await createRepoForOrgsCommandHandler.Handle(new CreateRepoForOrgsCommand([org.Username], "datamodels", true));
             if (numberOfReposCreated != 1)
             {
                 Console.WriteLine($"Could not create default datamodels repository");
