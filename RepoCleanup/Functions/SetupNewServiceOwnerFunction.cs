@@ -42,15 +42,13 @@ namespace RepoCleanup.Functions
                 Console.WriteLine($"Created all default teams for {org.Fullname}");
             }
 
-            // Create default datamodels repository
+            // Create default repositories
             var isDatamodelRepoCreated = await CreateRepo(giteaService, org, "datamodels", true);
-
-            // Create default content repository
             var isContentRepoCreated = await CreateRepo(giteaService, org, "content", false);
 
             if (isDatamodelRepoCreated && isContentRepoCreated)
             {
-                Console.WriteLine("Done setting up new serivce owner in Gitea!");
+                Console.WriteLine("Done setting up new service owner in Gitea!");
             }
         }
 
