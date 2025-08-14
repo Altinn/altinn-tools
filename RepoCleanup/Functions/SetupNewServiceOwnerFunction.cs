@@ -2,7 +2,6 @@
 using RepoCleanup.Application.Commands;
 using RepoCleanup.Infrastructure.Clients.Gitea;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace RepoCleanup.Functions
@@ -44,31 +43,31 @@ namespace RepoCleanup.Functions
             }
 
             // Create default datamodels repository
+            var isDatamodelRepoCreated = await CreateRepo(giteaService, org, "datamodels", true);
+
+            // Create default content repository
+            var isStaticContentRepoCreated = await CreateRepo(giteaService, org, "content", false);
+
+            if (isDatamodelRepoCreated && isStaticContentRepoCreated)
+            {
+                Console.WriteLine("Done setting up new serivce owner in Gitea!");
+            }
+        }
+
+        private static async Task<bool> CreateRepo(GiteaService giteaService, Organisation org, string repoName, bool preFixRepoNameWithOrg)
+        {
             var createRepoForOrgsCommandHandler = new CreateRepoForOrgsCommandHandler(giteaService);
-            var numberOfReposCreated = await createRepoForOrgsCommandHandler.Handle(new CreateRepoForOrgsCommand([org.Username], "datamodels", true));
+            var numberOfReposCreated = await createRepoForOrgsCommandHandler.Handle(new CreateRepoForOrgsCommand([org.Username],  repoName, preFixRepoNameWithOrg));
             if (numberOfReposCreated != 1)
             {
-                Console.WriteLine($"Could not create default datamodels repository");
-                return;
+                Console.WriteLine($"Could not create default {repoName} repository for {org.Fullname}");
+                return false;
             }
             else
             {
-                Console.WriteLine($"Created default datamodels repository for {org.Fullname}.");
+                Console.WriteLine($"Created default {repoName} repository for {org.Fullname}");
+                return true;
             }
-
-            // Create default static content repository
-            numberOfReposCreated = await createRepoForOrgsCommandHandler.Handle(new CreateRepoForOrgsCommand([org.Username], "content", true));
-            if (numberOfReposCreated != 1)
-            {
-                Console.WriteLine($"Could not create static content repository for {org.Fullname}");
-                return;
-            }
-            else
-            {
-                Console.WriteLine($"Created static content repository for {org.Fullname}.");
-            }
-
-            Console.WriteLine("Done setting up new serivce owner in Gitea!");
         }
     }
 }
