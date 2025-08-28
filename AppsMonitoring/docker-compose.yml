@@ -1,6 +1,6 @@
 services:
   altinn_apps_monitoring_postgres:
-    image: postgres:16
+    image: postgres:17
     container_name: monitoring_postgres
     restart: unless-stopped
     environment:
