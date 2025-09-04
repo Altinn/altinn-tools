@@ -8,6 +8,9 @@ on:
 jobs:
   add-to-project:
     name: Add issue to Team Platform project
+    permissions:
+      issues: write
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/add-to-project@main
