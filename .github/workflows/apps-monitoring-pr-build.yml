@@ -1,4 +1,6 @@
 name: Apps.Monitoring PR build
+permissions:
+  contents: read
 
 on:
   pull_request:
