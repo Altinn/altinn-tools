@@ -14,7 +14,7 @@ COPY src/Altinn.Apps.Monitoring/. ./
 RUN dotnet publish -c Release -o /app --no-restore
 RUN echo "{\"LogDirectory\":\"/telemetry\",\"FileSize\":32768,\"LogLevel\":\"Warning\"}" > /app/OTEL_DIAGNOSTICS.json
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble-chiseled-extra@sha256:7546ed4a06eec883137cb2012cdcfa2de74b4e17613cb2297bd8d2d68eeaa980
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble-chiseled-extra@sha256:6357a8a7d71612cd9e989cac29b70114b5224ad537fd959d484fa6db24a9f3b6
 WORKDIR /app
 COPY --from=build --chown=$APP_UID:$APP_UID /app ./
 USER $APP_UID
