@@ -45,7 +45,7 @@ jobs:
         run: docker build -t ${{ steps.vars.outputs.image }} -f src/Altinn.Apps.Monitoring/Dockerfile .
 
       - name: scan image
-        uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # 0.32.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           image-ref: '${{ steps.vars.outputs.image }}'
           format: 'table'
@@ -58,7 +58,7 @@ jobs:
         run: docker push ${{ steps.vars.outputs.image }}
 
       - name: yq install
-        uses: mikefarah/yq@f03c9dc599c37bfcaf533427211d05e51e6fee64 # v4.47.1
+        uses: mikefarah/yq@6251e95af8df3505def48c71f3119836701495d6 # v4.47.2
 
       - name: patch base with image tag
         run: |
