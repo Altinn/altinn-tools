@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: flux install
-        uses: fluxcd/flux2/action@6bf37f6a560fd84982d67f853162e4b3c2235edb # v2.6.4
+        uses: fluxcd/flux2/action@4a15fa6a023259353ef750acf1c98fe88407d4d0 # v2.7.2
         with:
           version: '2.5.1'
 
@@ -58,7 +58,7 @@ jobs:
         run: docker push ${{ steps.vars.outputs.image }}
 
       - name: yq install
-        uses: mikefarah/yq@6251e95af8df3505def48c71f3119836701495d6 # v4.47.2
+        uses: mikefarah/yq@0ecdce24e83f0fa127940334be98c86b07b0c488 # v4.48.1
 
       - name: patch base with image tag
         run: |
