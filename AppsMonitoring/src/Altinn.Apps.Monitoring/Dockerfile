@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0-noble@sha256:b9f738e7bfa1581ae38a91365f26e21354fe09c6b9a4f2327f6cec588486d9e2 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0-noble@sha256:5643129f0c9f09bab23387c57bfeea1e3e42f47c7370fd9e389a5739e5ef383c AS build
 WORKDIR /source
 ENV CI=true
 
