@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using Altinn.Apps.Monitoring.Application;
 using Altinn.Apps.Monitoring.Application.Db;
 using DotNet.Testcontainers.Builders;
@@ -129,16 +130,10 @@ internal sealed class HostFixture : WebApplicationFactory<Program>
         _configureServices?.Invoke(services, this);
     }
 
-    private static string FindSolutionDir()
+    private static string FindSolutionDir([CallerFilePath] string thisFilePath = "")
     {
-        var dir = Directory.GetCurrentDirectory();
-        while (dir != null)
-        {
-            if (Directory.GetFiles(dir, "*.sln").Length != 0)
-                return dir;
-            dir = Directory.GetParent(dir)?.FullName;
-        }
-        throw new Exception("Solution directory not found");
+        var dir = Path.GetFullPath(Path.Join(thisFilePath, "..", "..", ".."));
+        return dir;
     }
 
     public static async Task<HostFixture> Create(Action<IServiceCollection, HostFixture>? configureServices = null)
