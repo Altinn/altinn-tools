@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Altinn.Apps.Monitoring.Application;
 using Altinn.Apps.Monitoring.Application.Db;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using NodaTime.Serialization.SystemTextJson;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,13 +18,12 @@ if (!builder.IsLocal())
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
     {
         options.ForwardedHeaders = ForwardedHeaders.All;
-        options.KnownNetworks.Clear(); // Loopback by default, we don't have a stable known network
+        options.KnownIPNetworks.Clear(); // Loopback by default, we don't have a stable known network
         options.KnownProxies.Clear();
     });
 }
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddOpenApi();
 
 builder.AddApplication();
 
@@ -39,8 +38,11 @@ var app = builder.Build();
 if (!builder.IsLocal())
     app.UseForwardedHeaders();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+app.MapOpenApi();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/openapi/v1.json", "v1");
+});
 
 app.MapGet(
         "/health/ready",
@@ -50,13 +52,16 @@ app.MapGet(
             return TypedResults.Text("Healthy"u8, contentType: "text/plain", statusCode: 200);
         }
     )
-    .WithOpenApi(operation =>
-    {
-        operation.Tags.Clear();
-        operation.Tags.Add(new OpenApiTag { Name = "Operational" });
-        operation.OperationId = "Health / Ready";
-        return operation;
-    });
+    .AddOpenApiOperationTransformer(
+        (operation, context, ct) =>
+        {
+            operation.Tags ??= new HashSet<OpenApiTagReference>();
+            operation.Tags.Clear();
+            operation.Tags.Add(new OpenApiTagReference("Operational"));
+            operation.OperationId = "Health / Ready";
+            return Task.CompletedTask;
+        }
+    );
 
 app.MapGet(
         "/health/live",
@@ -66,13 +71,16 @@ app.MapGet(
             return TypedResults.Text("Healthy"u8, contentType: "text/plain", statusCode: 200);
         }
     )
-    .WithOpenApi(operation =>
-    {
-        operation.Tags.Clear();
-        operation.Tags.Add(new OpenApiTag { Name = "Operational" });
-        operation.OperationId = "Health / Live";
-        return operation;
-    });
+    .AddOpenApiOperationTransformer(
+        (operation, context, ct) =>
+        {
+            operation.Tags ??= new HashSet<OpenApiTagReference>();
+            operation.Tags.Clear();
+            operation.Tags.Add(new OpenApiTagReference("Operational"));
+            operation.OperationId = "Health / Live";
+            return Task.CompletedTask;
+        }
+    );
 
 app.MapPost(
         "/query/metrics/{from}/{to}",
@@ -176,44 +184,58 @@ app.MapPost(
             return TypedResults.Ok(new MetricsQueryResponse(items));
         }
     )
-    .WithOpenApi(operation =>
-    {
-        operation.Tags.Clear();
-        operation.Tags.Add(new OpenApiTag { Name = "Query" });
-        operation.OperationId = "Metrics";
-
-        var fromParameter = operation.Parameters.Single(p => p.Name == "from");
-        fromParameter.Example = new OpenApiString("2025-03-01T00:00:00Z");
-
-        var toParameter = operation.Parameters.Single(p => p.Name == "to");
-        toParameter.Example = new OpenApiString("2025-03-04T10:00:00Z");
-
-        operation.RequestBody = new OpenApiRequestBody
+    .AddOpenApiOperationTransformer(
+        (operation, context, ct) =>
         {
-            Required = true,
-            Content =
+            operation.Tags ??= new HashSet<OpenApiTagReference>();
+            operation.Tags.Clear();
+            operation.Tags.Add(new OpenApiTagReference("Query"));
+            operation.OperationId = "Metrics";
+
+            var fromParameter = operation.Parameters?.Single(p => p.Name == "from");
+            if (fromParameter?.Examples is not null)
             {
-                ["text/plain"] = new OpenApiMediaType
+                fromParameter.Examples["application/json"] = new OpenApiExample
                 {
-                    Schema = new OpenApiSchema
+                    Value = JsonValue.Create("2025-03-01T00:00:00Z"),
+                };
+            }
+
+            var toParameter = operation.Parameters?.Single(p => p.Name == "to");
+            if (toParameter?.Examples is not null)
+            {
+                toParameter.Examples["application/json"] = new OpenApiExample
+                {
+                    Value = JsonValue.Create("2025-03-04T10:00:00Z"),
+                };
+            }
+
+            operation.RequestBody = new OpenApiRequestBody
+            {
+                Required = true,
+                Content = new Dictionary<string, OpenApiMediaType>
+                {
+                    ["text/plain"] = new OpenApiMediaType
                     {
-                        Type = "string",
-                        Example = new OpenApiString(
-                            """
-                            AppRequests
-                            | where TimeGenerated >= datetime('{0}') and TimeGenerated < datetime('{1}')
-                            | where Name == 'GET Authorization/GetRolesForCurrentParty [app/org]'
-                            | summarize ['Value'] = sum(ItemCount) by bin(TimeGenerated, 1d), App = AppRoleName, AppVersion, Name
-                            | order by TimeGenerated desc
-                            """
-                        ),
-                        Nullable = false,
+                        Schema = new OpenApiSchema
+                        {
+                            Type = JsonSchemaType.String,
+                            Example = JsonValue.Create(
+                                """
+                                AppRequests
+                                | where TimeGenerated >= datetime('{0}') and TimeGenerated < datetime('{1}')
+                                | where Name == 'GET Authorization/GetRolesForCurrentParty [app/org]'
+                                | summarize ['Value'] = sum(ItemCount) by bin(TimeGenerated, 1d), App = AppRoleName, AppVersion, Name
+                                | order by TimeGenerated desc
+                                """
+                            ),
+                        },
                     },
                 },
-            },
-        };
-        return operation;
-    });
+            };
+            return Task.CompletedTask;
+        }
+    );
 
 app.Run();
 
