@@ -20,10 +20,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup dotnet '9.x'
+      - name: Setup dotnet '10.0.x'
         uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
         with:
-          dotnet-version: '9.x'
+          dotnet-version: '10.0.x'
 
       - name: Display dotnet version
         run: dotnet --version

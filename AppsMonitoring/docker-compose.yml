@@ -1,6 +1,6 @@
 services:
   altinn_apps_monitoring_postgres:
-    image: postgres:16
+    image: 'postgres:16@sha256:21f6013073bc6b92830a2129570e2f5ec42a6c734b5a985a41e83aa58f54c3c1'
     container_name: monitoring_postgres
     restart: unless-stopped
     environment:
@@ -12,7 +12,7 @@ services:
       - ./infra/postgres_init.sql:/docker-entrypoint-initdb.d/postgres_init.sql
 
   altinn_apps_monitoring_pgadmin:
-    image: dpage/pgadmin4
+    image: 'dpage/pgadmin4:9.10@sha256:8c128407f45f1c582eda69e71da1a393237388469052e3cc1e6ae4a475e12b70'
     container_name: monitoring_pgadmin
     restart: unless-stopped
     ports:
@@ -26,10 +26,10 @@ services:
       - ./infra/servers.json:/pgadmin4/servers.json
 
   altinn_apps_monitoring_lgtm:
+    image: 'docker.io/grafana/otel-lgtm:0.11@sha256:15b963783b3dc24a6256ebc1bffd4fc6c133348810faf86ecaa939912fd311b6'
     container_name: monitoring_lgtm
     restart: unless-stopped
     ports:
       - '3000:3000'
       - '4317:4317'
       - '4318:4318'
-    image: 'docker.io/grafana/otel-lgtm:0.11.10'
