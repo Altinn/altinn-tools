@@ -1,4 +1,5 @@
 
+.PHONY: build
 build:
 	dotnet build
 
@@ -27,6 +28,6 @@ push-image: build-image
 build-manifests:
 	kubectl kustomize infra/deployment/at24 > infra/deployment/at24/result.yaml
 
-POD := $(shell kubectl get po -o name --no-headers=true -l app=apps-monitor -n apps-monitor)
 debug-container:
+	$(eval POD := $(shell kubectl get po -o name --no-headers=true -l app=apps-monitor -n apps-monitor))
 	KUBECTL_DEBUG_CUSTOM_PROFILE=true kubectl debug --custom infra/debug-profile.json $(POD) -n apps-monitor -it --image=nicolaka/netshoot
