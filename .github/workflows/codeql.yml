@@ -36,7 +36,7 @@ jobs:
         dotnet-version: |
           9.0.x
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@497990dfed22177a82ba1bbab381bc8f6d27058f # v3.31.6
+      uses: github/codeql-action/init@f47c8e6a9bd05ef3ee422fc8d8663be7fe4bdc61 # v3.31.8
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
@@ -45,9 +45,9 @@ jobs:
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
     - name: Autobuild
-      uses: github/codeql-action/autobuild@497990dfed22177a82ba1bbab381bc8f6d27058f # v3.31.6
+      uses: github/codeql-action/autobuild@f47c8e6a9bd05ef3ee422fc8d8663be7fe4bdc61 # v3.31.8
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@497990dfed22177a82ba1bbab381bc8f6d27058f # v3.31.6
+      uses: github/codeql-action/analyze@f47c8e6a9bd05ef3ee422fc8d8663be7fe4bdc61 # v3.31.8
       with:
         category: "/language:${{matrix.language}}"
