@@ -16,7 +16,7 @@
     <Using Include="NodaTime" />
     <Using Include="NodaTime.Extensions" />
 
-    <PackageReference Include="CSharpier.MsBuild" Version="1.2.1">
+    <PackageReference Include="CSharpier.MsBuild" Version="1.2.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
