@@ -133,7 +133,7 @@ namespace RepoCleanup.Functions
                 isValid = IsValidOrgShortName(shortName);
                 if (!isValid)
                 {
-                    Console.WriteLine("Invalid name. Letters a-z and character '-' are permitted. Username must start with a letter and end with a letter or number.");
+                    Console.WriteLine("Invalid short name. Letters a-z and numbers are permitted. Name must start with a letter.");
                 }
             }
 
@@ -142,7 +142,7 @@ namespace RepoCleanup.Functions
 
         private static bool IsValidOrgShortName(string shortName)
         {
-            return Regex.IsMatch(shortName, "^[a-z]+[a-z0-9]$");
+            return Regex.IsMatch(shortName, "^[a-z][a-z0-9]+$");
         }
 
         public static void ConfirmWithExit(string confirmMessage, string exitMessage)
