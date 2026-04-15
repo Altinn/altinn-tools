@@ -25,6 +25,10 @@ namespace RepoCleanup.Application.CommandHandlers
             teams.Add(TeamOption.GetCreateTeamOption("Admin-TT02", "Members can administer published apps in TT02", false, Permission.read));
             teams.Add(TeamOption.GetCreateTeamOption("Devs", "All application developers", true, Permission.write));
             teams.Add(TeamOption.GetCreateTeamOption("Datamodels", "Team for those who can work on an organizations shared data models.", false, Permission.write));
+            teams.Add(TeamOption.GetCreateTeamOption("Resources-Publish-TT02", "Members can deploy resources to TT02", false, Permission.read));
+            teams.Add(TeamOption.GetCreateTeamOption("Resources-Publish-PROD", "Members can deploy resources to PROD", false, Permission.read));
+            teams.Add(TeamOption.GetCreateTeamOption("AccessLists-TT02", "Members can deploy resources to TT02", false, Permission.read));
+            teams.Add(TeamOption.GetCreateTeamOption("AccessLists-PROD", "Members can deploy resources to PROD", false, Permission.read));
 
             foreach (CreateTeamOption team in teams)
             {
