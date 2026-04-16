@@ -49,8 +49,33 @@ namespace RepoCleanup.Functions
 
             if (isDatamodelRepoCreated && isContentRepoCreated && isResourceRepoCreated)
             {
-                Console.WriteLine("Done setting up new service owner in Gitea!");
+                Console.WriteLine($"Added all default repositories for {org.Fullname}");
             }
+
+            // Ensure that datamodels and resources teams have write access to the datamodels and resources repos respectively
+            var addTeamToRepoCommandHandler = new AddTeamToRepoCommandHandler(giteaService);
+            int datamodelsTeamAddedToDatamodelsRepo = await addTeamToRepoCommandHandler.Handle(new AddTeamToRepoCommand([org.Username], "datamodels", true, "Datamodels"));
+            int resourcesTeamAddedToResourcesRepo = await addTeamToRepoCommandHandler.Handle(new AddTeamToRepoCommand([org.Username], "resources", true, "Resources"));
+
+            if (datamodelsTeamAddedToDatamodelsRepo == 0)
+            {
+                Console.WriteLine($"Could not add Datamodels team to datamodels repo for {org.Fullname}");
+            }
+            else
+            {
+                Console.WriteLine($"Added Datamodels team to datamodels repo for {org.Fullname}");
+            }
+
+            if (resourcesTeamAddedToResourcesRepo == 0)
+            {
+                Console.WriteLine($"Could not add Resources team to resources repo for {org.Fullname}");
+            }
+            else
+            {
+                Console.WriteLine($"Added Resources team to resources repo for {org.Fullname}");
+            }
+
+            Console.WriteLine("Done setting up new service owner in Gitea!");
         }
 
         private static async Task<bool> CreateRepoWithPrefix(GiteaService giteaService, Organisation org, string repoName)
