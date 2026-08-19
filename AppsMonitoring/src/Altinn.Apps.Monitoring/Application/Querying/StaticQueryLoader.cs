@@ -23,8 +23,8 @@ internal sealed class StaticQueryLoader(ILogger<StaticQueryLoader> logger, IOpti
             new(
                 "Failed Storage instance events",
                 QueryType.Traces,
-                // * 'OperationName' identifies the overall/root operation, which is not necessarily process/next for OpenTelemetry.
-                //   Use the joined request span's own 'Name1' instead.
+                // * 'OperationName' identifies the overall operation, which is not necessarily process/next for either
+                //   the classic Application Insights SDK or OpenTelemetry. Use the joined request's own 'Name1' instead.
                 // * 'Target' sometimes has garbage at the end, so we use 'startswith'
                 // * This error condition should have failed the process/next request span, so we check 'Success1'
                 $$"""
@@ -41,8 +41,8 @@ internal sealed class StaticQueryLoader(ILogger<StaticQueryLoader> logger, IOpti
             new(
                 "Failed Altinn events",
                 QueryType.Traces,
-                // * 'OperationName' identifies the overall/root operation, which is not necessarily process/next for OpenTelemetry.
-                //   Use the joined request span's own 'Name1' instead.
+                // * 'OperationName' identifies the overall operation, which is not necessarily process/next for either
+                //   the classic Application Insights SDK or OpenTelemetry. Use the joined request's own 'Name1' instead.
                 // * 'Target' sometimes has garbage at the end, so we use 'startswith'
                 // * Errors in app.process.completed event do not fail the process/next request span, so we don't check 'Success1' here
                 $$"""
