@@ -127,13 +127,18 @@ internal sealed partial class AzureServiceOwnerMonitorAdapter(
         return telemetry;
     }
 
-    static List<TelemetryEntity> ReadTraces(ServiceOwner serviceOwner, int i, LogsTable table, Regex instanceIdRegex)
+    internal static List<TelemetryEntity> ReadTraces(
+        ServiceOwner serviceOwner,
+        int i,
+        LogsTable table,
+        Regex instanceIdRegex
+    )
     {
         var telemetry = new List<TelemetryEntity>(table.Rows.Count);
 
         var indexes = table.Columns.Index();
         int nameIdx = -1;
-        int operationNameIdx = -1;
+        int requestNameIdx = -1;
         int operationIdIdx = -1;
         int urlIdx = -1;
         int timeGeneratedIdx = -1;
@@ -154,8 +159,8 @@ internal sealed partial class AzureServiceOwnerMonitorAdapter(
         {
             if (column.Name == "Name")
                 nameIdx = rowIndex;
-            else if (column.Name == "OperationName")
-                operationNameIdx = rowIndex;
+            else if (column.Name == "Name1")
+                requestNameIdx = rowIndex;
             else if (column.Name == "OperationId")
                 operationIdIdx = rowIndex;
             else if (column.Name == "TimeGenerated")
@@ -228,7 +233,7 @@ internal sealed partial class AzureServiceOwnerMonitorAdapter(
                         TraceId = traceId,
                         SpanId = spanId,
                         ParentSpanId = ReadString(row, parentIdIdx),
-                        TraceName = ReadString(row, operationNameIdx),
+                        TraceName = ReadString(row, requestNameIdx),
                         SpanName = name,
                         Success = ReadBool(row, successIdx),
                         Result = ReadString(row, resultCodeIdx),
