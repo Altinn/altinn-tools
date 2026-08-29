@@ -1,6 +1,6 @@
 services:
   altinn_apps_monitoring_postgres:
-    image: 'postgres:16@sha256:0b08171b5cdbf3214c42dbde17883ccfbf494b5e018d837ffe3fee91a3aec5c2'
+    image: 'postgres:16@sha256:f1c3376c26f2609ab9f29f71f824103fe2fcd8ee0346485cb6122a4f93df6f94'
     container_name: monitoring_postgres
     restart: unless-stopped
     environment:
