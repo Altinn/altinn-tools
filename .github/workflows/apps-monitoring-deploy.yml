@@ -15,12 +15,12 @@ jobs:
         working-directory: ./AppsMonitoring
 
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 0
 
       - name: flux install
-        uses: fluxcd/flux2/action@8454b02a32e48d775b9f563cb51fdcb1787b5b93 # v2.7.5
+        uses: fluxcd/flux2/action@dd233c4fadef306a62b7893204f8e3817fecc2b2 # v2.9.5
         with:
           version: '2.5.1'
 
@@ -32,7 +32,7 @@ jobs:
           echo "image_tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: az login
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        uses: azure/login@7184910d9eb2b1c5e48f7073824a90609bb9b6d6 # v2.3.1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -45,7 +45,7 @@ jobs:
         run: docker build -t ${{ steps.vars.outputs.image }} -f src/Altinn.Apps.Monitoring/Dockerfile .
 
       - name: scan image
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: '${{ steps.vars.outputs.image }}'
           format: 'table'
@@ -58,7 +58,7 @@ jobs:
         run: docker push ${{ steps.vars.outputs.image }}
 
       - name: yq install
-        uses: mikefarah/yq@065b200af9851db0d5132f50bc10b1406ea5c0a8 # v4.50.1
+        uses: mikefarah/yq@c14f446382944492701b16c1ddb48bb9dbe683e3 # v4.53.6
 
       - name: patch base with image tag
         run: |
