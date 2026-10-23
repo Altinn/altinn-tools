@@ -13,7 +13,7 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@main
+      - uses: actions/add-to-project@10852874378313643e82f7be4d23615b23a22d99 # main
         with:
           project-url: https://github.com/orgs/Altinn/projects/20
           github-token: ${{ secrets.ASSIGN_PROJECT_TOKEN }}
