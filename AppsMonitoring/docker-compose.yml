@@ -12,7 +12,7 @@ services:
       - ./infra/postgres_init.sql:/docker-entrypoint-initdb.d/postgres_init.sql
 
   altinn_apps_monitoring_pgadmin:
-    image: 'dpage/pgadmin4:9.16@sha256:40fa840c5bb7c8463957f1255b01283732c2d8c9396a956d180f8e6c296753b3'
+    image: 'dpage/pgadmin4:9.19@sha256:3591b3d02910dcd817dec6fcaa681c278ba6966945283dd0ea0042731c330c83'
     container_name: monitoring_pgadmin
     restart: unless-stopped
     ports:
