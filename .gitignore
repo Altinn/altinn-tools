@@ -361,3 +361,5 @@ AppsMonitoring/**/appsettings.Secret.json
 AppsMonitoring/**/data.db
 AppsMonitoring/infra/appsettings.*.json
 AppsMonitoring/infra/**/result.yaml
+
+AppsAnalysis/config.ini
